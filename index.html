@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ece8df">
+  <title>Meu Caderno</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="spiral" aria-hidden="true"></aside>
+
+    <section class="notebook">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">CADERNO DIÁRIO</span>
+          <h1>Meu Caderno</h1>
+        </div>
+
+        <label class="date-picker-wrap">
+          <span>Data</span>
+          <input type="date" id="dataSelecionada">
+        </label>
+      </header>
+
+      <section class="composer">
+        <input
+          id="novoItem"
+          type="text"
+          maxlength="140"
+          placeholder="O que você está tratando hoje?"
+          autocomplete="off"
+        >
+        <button id="btnAdicionar" type="button">Adicionar</button>
+      </section>
+
+      <section class="marker-bar" aria-label="Cor do marca-texto">
+        <div>
+          <span class="marker-label">Marca-texto</span>
+          <strong id="corSelecionadaTexto">Rosa</strong>
+        </div>
+
+        <div class="marker-colors" id="markerColors">
+          <button class="marker-color active" type="button" data-color="#f3a7d8" data-name="Rosa" style="--marker:#f3a7d8" aria-label="Rosa"></button>
+          <button class="marker-color" type="button" data-color="#fff08c" data-name="Amarelo" style="--marker:#fff08c" aria-label="Amarelo"></button>
+          <button class="marker-color" type="button" data-color="#a9e6b5" data-name="Verde" style="--marker:#a9e6b5" aria-label="Verde"></button>
+          <button class="marker-color" type="button" data-color="#9fd8ff" data-name="Azul" style="--marker:#9fd8ff" aria-label="Azul"></button>
+          <button class="marker-color" type="button" data-color="#c9b4ff" data-name="Lilás" style="--marker:#c9b4ff" aria-label="Lilás"></button>
+          <button class="marker-color" type="button" data-color="#ffc59b" data-name="Laranja" style="--marker:#ffc59b" aria-label="Laranja"></button>
+        </div>
+      </section>
+
+      <section class="page-heading">
+        <div>
+          <span class="date-small" id="dataExtenso"></span>
+          <h2 id="tituloData"></h2>
+        </div>
+        <span class="counter" id="contadorItens">0 itens</span>
+      </section>
+
+      <section id="listaItens" class="paper-lines" aria-live="polite"></section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
