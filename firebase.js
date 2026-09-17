@@ -3,37 +3,28 @@
 ===================================================== */
 
 import {
-
     initializeApp,
     getApps,
     getApp
-
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
-
 import {
-
     getAuth,
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
     setPersistence,
     browserLocalPersistence
-
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
-
 import {
-
     getFirestore,
     collection,
     doc,
     setDoc,
     deleteDoc,
     onSnapshot
-
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-
 
 /* =====================================================
    CONFIGURAÇÃO
@@ -48,70 +39,37 @@ const firebaseConfig = {
   appId: "1:936024384733:web:6e38f64f720a60166ee734"
 };
 
-
 /* =====================================================
    INICIALIZAÇÃO
 ===================================================== */
 
-const app =
-
-    getApps().length > 0
-
-        ? getApp()
-
-        : initializeApp(
-            firebaseConfig
-        );
-
-
-const auth =
-    getAuth(app);
-
-
-const db =
-    getFirestore(app);
-
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 /* =====================================================
    LOGIN PERSISTENTE
 ===================================================== */
 
-setPersistence(
-    auth,
-    browserLocalPersistence
-)
-.catch(
-    erro => {
-
-        console.error(
-            "Erro na persistência:",
-            erro
-        );
-
-    }
-);
-
+setPersistence(auth, browserLocalPersistence)
+.catch(erro => {
+    console.error("Erro na persistência:", erro);
+});
 
 /* =====================================================
    EXPORTAÇÕES
 ===================================================== */
 
 export {
-
     app,
-
     auth,
-
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
-
     db,
-
     collection,
     doc,
     setDoc,
     deleteDoc,
     onSnapshot
-
 };

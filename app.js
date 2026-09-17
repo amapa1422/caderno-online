@@ -1,11 +1,44 @@
+/* =====================================================
+   CADERNO ONLINE - FIREBASE
+===================================================== */
+
+import {
+  auth,
+  db,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot
+} from "./firebase.js";
+
 const STORAGE_KEY = "meu-caderno-diario-v1";
+const MIGRATION_KEY = "meu-caderno-diario-migrado-firebase-v1";
 
 const state = {
+  usuario: null,
   data: hojeISO(),
   cor: "#f3a7d8",
   corNome: "Rosa",
-  registros: carregarRegistros()
+  registros: {},
+  unsubscribe: null
 };
+
+/* =====================================================
+   ELEMENTOS
+===================================================== */
+
+const telaLogin = document.getElementById("telaLogin");
+const aplicativo = document.getElementById("aplicativo");
+const formLogin = document.getElementById("formLogin");
+const emailLogin = document.getElementById("emailLogin");
+const senhaLogin = document.getElementById("senhaLogin");
+const btnEntrar = document.getElementById("btnEntrar");
+const btnSair = document.getElementById("btnSair");
+const mensagemLogin = document.getElementById("mensagemLogin");
 
 const dataSelecionada = document.getElementById("dataSelecionada");
 const novoItem = document.getElementById("novoItem");
@@ -17,6 +50,10 @@ const tituloData = document.getElementById("tituloData");
 const contadorItens = document.getElementById("contadorItens");
 const listaItens = document.getElementById("listaItens");
 const toast = document.getElementById("toast");
+
+/* =====================================================
+   DATAS E UTILIDADES
+===================================================== */
 
 function hojeISO() {
   const agora = new Date();
@@ -48,27 +85,6 @@ function gerarId() {
   return window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function carregarRegistros() {
-  try {
-    const salvo = localStorage.getItem(STORAGE_KEY);
-    return salvo ? JSON.parse(salvo) : {};
-  } catch {
-    return {};
-  }
-}
-
-function salvar() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.registros));
-}
-
-function itensDoDia() {
-  return state.registros[state.data] || [];
-}
-
-function garantirDia() {
-  if (!state.registros[state.data]) state.registros[state.data] = [];
-}
-
 function escaparHTML(valor = "") {
   return String(valor)
     .replaceAll("&", "&amp;")
@@ -78,14 +94,221 @@ function escaparHTML(valor = "") {
     .replaceAll("'", "&#039;");
 }
 
-function mostrarToast(mensagem) {
+function mostrarToast(mensagem, tipo = "sucesso") {
   toast.textContent = mensagem;
+  toast.className = `toast ${tipo}`;
   toast.hidden = false;
   clearTimeout(mostrarToast.timer);
   mostrarToast.timer = setTimeout(() => {
     toast.hidden = true;
-  }, 1800);
+  }, 1900);
 }
+
+function itensDoDia() {
+  return state.registros[state.data] || [];
+}
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+formLogin.addEventListener("submit", async event => {
+  event.preventDefault();
+  mensagemLogin.textContent = "";
+  btnEntrar.disabled = true;
+  btnEntrar.textContent = "Entrando...";
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      emailLogin.value.trim(),
+      senhaLogin.value
+    );
+  } catch (erro) {
+    console.error("Erro no login:", erro);
+
+    if (erro.code === "auth/invalid-credential") {
+      mensagemLogin.textContent = "E-mail ou senha incorretos.";
+    } else if (erro.code === "auth/too-many-requests") {
+      mensagemLogin.textContent = "Muitas tentativas. Aguarde um pouco e tente novamente.";
+    } else if (erro.code === "auth/network-request-failed") {
+      mensagemLogin.textContent = "Falha de conexão. Verifique sua internet.";
+    } else {
+      mensagemLogin.textContent = "Não foi possível entrar.";
+    }
+  } finally {
+    btnEntrar.disabled = false;
+    btnEntrar.textContent = "Entrar";
+  }
+});
+
+btnSair.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+  } catch (erro) {
+    console.error("Erro ao sair:", erro);
+  }
+});
+
+onAuthStateChanged(auth, async usuario => {
+  if (usuario) {
+    state.usuario = usuario;
+    telaLogin.hidden = true;
+    aplicativo.hidden = false;
+
+    await migrarLocalStorageParaFirebase();
+    iniciarSincronizacao();
+  } else {
+    pararSincronizacao();
+    state.usuario = null;
+    state.registros = {};
+    aplicativo.hidden = true;
+    telaLogin.hidden = false;
+    renderizar();
+  }
+});
+
+/* =====================================================
+   FIRESTORE
+===================================================== */
+
+function colecaoItens() {
+  return collection(db, "users", state.usuario.uid, "caderno");
+}
+
+function referenciaItem(id) {
+  return doc(db, "users", state.usuario.uid, "caderno", id);
+}
+
+function pararSincronizacao() {
+  if (state.unsubscribe) {
+    state.unsubscribe();
+    state.unsubscribe = null;
+  }
+}
+
+function iniciarSincronizacao() {
+  if (!state.usuario?.uid) return;
+
+  pararSincronizacao();
+
+  state.unsubscribe = onSnapshot(
+    colecaoItens(),
+    snapshot => {
+      const registros = {};
+
+      snapshot.docs.forEach(documento => {
+        const item = {
+          id: documento.id,
+          ...documento.data()
+        };
+
+        if (!item.data) return;
+
+        if (!registros[item.data]) {
+          registros[item.data] = [];
+        }
+
+        registros[item.data].push(item);
+      });
+
+      Object.values(registros).forEach(itens => {
+        itens.sort((a, b) => (a.criadoEm || 0) - (b.criadoEm || 0));
+      });
+
+      state.registros = registros;
+      renderizar();
+    },
+    erro => {
+      console.error("Erro ao sincronizar caderno:", erro);
+      mostrarToast("Erro ao sincronizar com o Firebase.", "erro");
+    }
+  );
+}
+
+async function salvarItem(item) {
+  if (!state.usuario?.uid) return;
+
+  await setDoc(
+    referenciaItem(item.id),
+    {
+      data: item.data,
+      texto: item.texto,
+      concluido: Boolean(item.concluido),
+      cor: item.cor || state.cor,
+      criadoEm: item.criadoEm || Date.now(),
+      atualizadoEm: Date.now()
+    },
+    { merge: true }
+  );
+}
+
+async function excluirItem(id) {
+  if (!state.usuario?.uid) return;
+  await deleteDoc(referenciaItem(id));
+}
+
+/* =====================================================
+   MIGRAÇÃO DO LOCALSTORAGE ANTIGO
+===================================================== */
+
+async function migrarLocalStorageParaFirebase() {
+  if (!state.usuario?.uid) return;
+  if (localStorage.getItem(MIGRATION_KEY) === "1") return;
+
+  let antigo = null;
+
+  try {
+    antigo = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  } catch {
+    antigo = null;
+  }
+
+  if (!antigo || typeof antigo !== "object") {
+    localStorage.setItem(MIGRATION_KEY, "1");
+    return;
+  }
+
+  const operacoes = [];
+
+  Object.entries(antigo).forEach(([data, itens]) => {
+    if (!Array.isArray(itens)) return;
+
+    itens.forEach(item => {
+      const id = item.id || gerarId();
+
+      operacoes.push(
+        setDoc(
+          referenciaItem(id),
+          {
+            data,
+            texto: String(item.texto || ""),
+            concluido: Boolean(item.concluido),
+            cor: item.cor || "#f3a7d8",
+            criadoEm: item.criadoEm || Date.now(),
+            atualizadoEm: Date.now()
+          },
+          { merge: true }
+        )
+      );
+    });
+  });
+
+  try {
+    await Promise.all(operacoes);
+    localStorage.setItem(MIGRATION_KEY, "1");
+
+    if (operacoes.length > 0) {
+      mostrarToast("Anotações antigas importadas para o Firebase.");
+    }
+  } catch (erro) {
+    console.error("Erro na migração:", erro);
+  }
+}
+
+/* =====================================================
+   RENDERIZAÇÃO
+===================================================== */
 
 function renderizar() {
   dataSelecionada.value = state.data;
@@ -113,23 +336,35 @@ function renderizar() {
   `).join("");
 }
 
-function adicionarItem() {
-  const texto = novoItem.value.trim();
-  if (!texto) return;
+/* =====================================================
+   AÇÕES DO CADERNO
+===================================================== */
 
-  garantirDia();
-  state.registros[state.data].push({
+async function adicionarItem() {
+  const texto = novoItem.value.trim();
+  if (!texto || !state.usuario?.uid) return;
+
+  const item = {
     id: gerarId(),
+    data: state.data,
     texto,
     concluido: false,
     cor: state.cor,
     criadoEm: Date.now()
-  });
+  };
 
-  salvar();
-  novoItem.value = "";
-  novoItem.focus();
-  renderizar();
+  btnAdicionar.disabled = true;
+
+  try {
+    await salvarItem(item);
+    novoItem.value = "";
+    novoItem.focus();
+  } catch (erro) {
+    console.error("Erro ao adicionar item:", erro);
+    mostrarToast("Não foi possível salvar.", "erro");
+  } finally {
+    btnAdicionar.disabled = false;
+  }
 }
 
 dataSelecionada.addEventListener("change", () => {
@@ -156,7 +391,7 @@ markerColors.addEventListener("click", event => {
   botao.classList.add("active");
 });
 
-listaItens.addEventListener("click", event => {
+listaItens.addEventListener("click", async event => {
   const linha = event.target.closest("[data-id]");
   const acao = event.target.closest("[data-action]");
   if (!linha || !acao) return;
@@ -166,17 +401,29 @@ listaItens.addEventListener("click", event => {
   if (!item) return;
 
   if (acao.dataset.action === "toggle") {
-    item.concluido = !item.concluido;
-    if (item.concluido) item.cor = state.cor;
-    salvar();
-    renderizar();
-    mostrarToast(item.concluido ? "Finalizado e grifado." : "Marca removida.");
+    const atualizado = {
+      ...item,
+      concluido: !item.concluido,
+      cor: !item.concluido ? state.cor : (item.cor || state.cor)
+    };
+
+    try {
+      await salvarItem(atualizado);
+      mostrarToast(atualizado.concluido ? "Finalizado e grifado." : "Marca removida.");
+    } catch (erro) {
+      console.error("Erro ao atualizar item:", erro);
+      mostrarToast("Não foi possível atualizar.", "erro");
+    }
   }
 
   if (acao.dataset.action === "delete") {
-    state.registros[state.data] = itens.filter(registro => registro.id !== item.id);
-    salvar();
-    renderizar();
+    try {
+      await excluirItem(item.id);
+      mostrarToast("Item excluído.");
+    } catch (erro) {
+      console.error("Erro ao excluir item:", erro);
+      mostrarToast("Não foi possível excluir.", "erro");
+    }
   }
 });
 

@@ -8,7 +8,35 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <main class="app-shell">
+
+  <!-- LOGIN -->
+  <section id="telaLogin" class="login-screen">
+    <div class="login-card">
+      <div class="login-symbol">📒</div>
+      <span class="eyebrow">CADERNO ONLINE</span>
+      <h1>Meu Caderno</h1>
+      <p>Entre para acessar o mesmo caderno no celular e no computador.</p>
+
+      <form id="formLogin" class="login-form">
+        <label>
+          E-mail
+          <input id="emailLogin" type="email" autocomplete="email" placeholder="seu@email.com" required>
+        </label>
+
+        <label>
+          Senha
+          <input id="senhaLogin" type="password" autocomplete="current-password" placeholder="••••••••" minlength="6" required>
+        </label>
+
+        <button id="btnEntrar" type="submit">Entrar</button>
+      </form>
+
+      <p id="mensagemLogin" class="login-message"></p>
+    </div>
+  </section>
+
+  <!-- CADERNO -->
+  <main id="aplicativo" class="app-shell" hidden>
     <aside class="spiral" aria-hidden="true"></aside>
 
     <section class="notebook">
@@ -18,10 +46,14 @@
           <h1>Meu Caderno</h1>
         </div>
 
-        <label class="date-picker-wrap">
-          <span>Data</span>
-          <input type="date" id="dataSelecionada">
-        </label>
+        <div class="topbar-controls">
+          <label class="date-picker-wrap">
+            <span>Data</span>
+            <input type="date" id="dataSelecionada">
+          </label>
+
+          <button id="btnSair" class="logout-btn" type="button" title="Sair">Sair</button>
+        </div>
       </header>
 
       <section class="composer">
@@ -65,6 +97,6 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
