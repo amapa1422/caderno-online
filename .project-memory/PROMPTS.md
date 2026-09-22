@@ -25,7 +25,8 @@ CHANGE relacionado: `CHANGE-0001`.
 Checkpoint antes: **CP-0001 / BASELINE-0001** —
 `2eb960f0b473a216e82e4d242dff044ecac0e481`.
 
-Checkpoint depois: **CP-0002** — `refs/tags/CP-0002`.
+Checkpoint depois: **CP-0002** — `6d10c7b0b299e2802e9cca026ee427fe6b2d436c`
+(`refs/tags/CP-0002`, 2026-09-22 às 16:38:31 -03:00).
 
 Trecho fiel da solicitação: “Agora quero que você faça SOMENTE a configuração
 desse sistema.” / “Não prossiga para redesign ou outras modificações nesta tarefa.”
@@ -33,7 +34,7 @@ desse sistema.” / “Não prossiga para redesign ou outras modificações nest
 Restrições: Não modificar interface, funcionalidades, Firebase ou lógica de negócio.
 Manter o histórico, documentar decisões e tornar os checkpoints restauráveis.
 
-Estado: Configuração documentada; conclusão e validações descritas em `CHANGE-0001`.
+Estado: Concluído; configuração e validações descritas em `CHANGE-0001`.
 O commit complementar de hashes pertence a este mesmo pedido; não é outro prompt.
 
 Interpretação futura: “antes de PROMPT-0001” aponta a `CP-0001`; restaurar o

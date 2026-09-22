@@ -7,14 +7,16 @@ não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
 Data: 2026-09-22.
 
-Hora: 16:25:04 -03:00 (checkpoint inicial; conclusão registrada no commit final).
+Hora: 16:25:04 -03:00 (checkpoint inicial); 16:38:31 -03:00 (checkpoint final).
 
 Prompt/Task: `PROMPT-0001` — instalar memória permanente e rollback.
 
 Checkpoint inicial: `CP-0001` / `BASELINE-0001`,
 commit `2eb960f0b473a216e82e4d242dff044ecac0e481`.
 
-Checkpoint final: `CP-0002`, referência `refs/tags/CP-0002`.
+Checkpoint final: `CP-0002`, commit `6d10c7b0b299e2802e9cca026ee427fe6b2d436c`
+(`refs/tags/CP-0002`). Hashes literais finalizados em commit complementar de
+metadados da mesma tarefa, conforme `DEC-0005`.
 
 ### Objetivo
 

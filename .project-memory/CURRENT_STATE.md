@@ -100,14 +100,15 @@ Nenhum dos cinco arquivos do aplicativo foi alterado.
 ## Último checkpoint estável
 
 - Checkpoint final da infraestrutura: **CP-0002**.
-- Commit: `refs/tags/CP-0002` (resolver com `git rev-parse 'CP-0002^{commit}'`).
+- Commit: **6d10c7b0b299e2802e9cca026ee427fe6b2d436c**
+  (2026-09-22, 16:38:31 -03:00; `refs/tags/CP-0002`).
 - Nível de validação: documentação revisada, referências Git e restauração do
   baseline verificadas; aplicativo preservado. Integração Firebase e comportamento
   completo no navegador ainda exigem teste manual.
 - Baseline do aplicativo: **BASELINE-0001 / CP-0001**,
   commit **2eb960f0b473a216e82e4d242dff044ecac0e481**.
 - Branch de instalação: `main`. Checkpoints locais; nenhum push/deploy nesta tarefa.
-- Um commit complementar apenas de hashes/metadados pode suceder `CP-0002`;
+- O commit complementar apenas de hashes/metadados sucede `CP-0002`;
   ele pertence à mesma tarefa e não muda o aplicativo.
 
 Consulte `KNOWN_ISSUES.md` para os problemas preexistentes. “Estável” aqui indica
