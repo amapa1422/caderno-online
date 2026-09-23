@@ -81,7 +81,7 @@ offline de notas explicitamente configurada. Git não restaura dados remotos.
 PROMPT-0005 restaurou feito discreto, confirmou exclusão e tornou a cor global,
 mantendo criação acima da lista, caligrafia, seletor livre e shell moderno.
 
-- Checkpoint final: **CP-0009**, commit em `refs/tags/CP-0009`.
+- Checkpoint final: **CP-0009**, `13e392a8636fbae4c98810d7b855c92b21f0f2ce`.
 - Inicial: CP-0008, `429955012b01bb6e5d8c91a7b3d084ddfbad1557`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.

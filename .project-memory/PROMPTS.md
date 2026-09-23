@@ -17,7 +17,7 @@ essa cor sem recolorir notas antigas automaticamente. Manter fonte, shell,
 calendário, auth e animação de páginas. Testar CRUD/conclusão/cancelamento,
 cor global/reload/recoloração explícita, legados, temas, mobile e console.
 Inicial: CP-0008, `429955012b01bb6e5d8c91a7b3d084ddfbad1557`.
-Final: CP-0009, commit em `refs/tags/CP-0009`. CHANGE-0005.
+Final: CP-0009, `13e392a8636fbae4c98810d7b855c92b21f0f2ce`. CHANGE-0005.
 Arquivos: app.js, index.html, style.css, testes e memória do projeto.
 Estado: Concluído e validado localmente: 64 verificações funcionais, 8 de reload,
 13 de teclado/mobile, seleção real via mouse, arraste mouse/toque, 18 combinações

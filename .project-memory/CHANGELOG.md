@@ -7,7 +7,7 @@ não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
 Data: 2026-09-23. Hora inicial: 15:08:43 -03:00.
 Prompt: PROMPT-0005. Inicial: CP-0008, `429955012b01bb6e5d8c91a7b3d084ddfbad1557`.
-Final: CP-0009, commit em `refs/tags/CP-0009`.
+Final: CP-0009, `13e392a8636fbae4c98810d7b855c92b21f0f2ce`, 15:24:45 -03:00.
 
 ### Objetivo
 
