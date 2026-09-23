@@ -2,16 +2,12 @@ import {
   auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged,
   collection, doc, setDoc, deleteDoc, onSnapshot
 } from "./firebase.js";
+import { normalizarCor, hsvParaHex, hexParaHSV } from "./color.js";
 const $ = id => document.getElementById(id);
 const icon = name => '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"/></svg>';
 const STORAGE_KEY = "meu-caderno-diario-v1", MIGRATION_KEY = "meu-caderno-diario-migrado-firebase-v1";
-const COLORS = [
-  ["Amarelo", "yellow"], ["Laranja", "orange"], ["Coral", "coral"], ["Vermelho", "red"],
-  ["Rosa", "pink"], ["Roxo", "purple"], ["Lilás", "lilac"], ["Azul", "blue"],
-  ["Azul claro", "sky"], ["Ciano", "cyan"], ["Verde", "green"], ["Verde limão", "lime"], ["Cinza", "gray"]
-].map(([name, token]) => ({ name, token, color: getComputedStyle(document.documentElement).getPropertyValue("--marker-" + token).trim() }));
 const state = {
-  usuario: null, data: hojeISO(), cor: COLORS[4].color, corNome: "Rosa",
+  usuario: null, data: hojeISO(), cor: null,
   registros: {}, unsubscribe: null, ready: false, pending: 0, error: false, cached: false,
   session: 0, addPromise: null, drafts: new Map(), busyItems: new Set(), marking: new Set(),
   editing: null, turning: false, selectedRange: null, paletteTarget: null, paletteAnchor: null,
@@ -37,7 +33,6 @@ function dataValida(value) { return /^\d{4}-\d{2}-\d{2}$/.test(value) && value >
 function moverData(iso, delta) { const date = isoParaData(iso); date.setDate(date.getDate() + delta); return dataISO(date); }
 function dataLonga(iso) { return isoParaData(iso).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
 function escaparHTML(value = "") { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
-function corValida(color) { return /^#[0-9a-f]{6}$/i.test(color || "") ? color : state.cor; }
 function gerarId() { return window.crypto?.randomUUID?.() || Date.now() + "-" + Math.random().toString(16).slice(2); }
 function itensDoDia() { return state.registros[state.data] || []; }
 function encontrarItem(id) { return Object.values(state.registros).flat().find(item => item.id === id); }
@@ -69,11 +64,14 @@ async function gravar(operation) {
 }
 function salvarItem(item) {
   const reference = referenciaItem(item.id), payload = {
-    data: item.data, texto: item.texto, concluido: Boolean(item.concluido),
-    cor: corValida(item.cor), criadoEm: item.criadoEm || Date.now(), atualizadoEm: Date.now()
+    data: item.data, texto: item.texto,
+    criadoEm: item.criadoEm || Date.now(), atualizadoEm: Date.now()
   };
   // Optional substring ranges; no migration or replacement of legacy documents.
-  if (Array.isArray(item.grifos)) payload.grifos = normalizarGrifos(item.grifos, item.texto.length);
+  if (Array.isArray(item.grifos)) {
+    payload.grifos = normalizarGrifos(item.grifos, item.texto.length);
+    payload.versaoGrifos = 2;
+  }
   return gravar(() => setDoc(reference, payload, { merge: true }));
 }
 function pararSincronizacao() { state.unsubscribe?.(); state.unsubscribe = null; }
@@ -106,7 +104,7 @@ async function migrarLocalStorageParaFirebase(uid) {
     Object.entries(old).forEach(([date, items]) => {
       if (!Array.isArray(items)) return;
       items.forEach(item => operations.push(setDoc(referenciaItem(item.id || gerarId(), uid), {
-        data: date, texto: String(item.texto || ""), concluido: Boolean(item.concluido), cor: item.cor || "#f3a7d8",
+        data: date, texto: String(item.texto || ""), concluido: Boolean(item.concluido), ...(item.cor ? { cor: item.cor } : {}),
         criadoEm: item.criadoEm || Date.now(), atualizadoEm: Date.now()
       }, { merge: true })));
     });
@@ -152,7 +150,9 @@ async function adicionarItem() {
   const text = $("novoItem").value.trim();
   if (!text || !state.usuario || !state.ready || state.addPromise) return false;
   const day = state.data, originalInput = $("novoItem").value, session = state.session;
-  const item = { id: gerarId(), data: day, texto: text, concluido: false, cor: state.cor, criadoEm: Date.now() };
+  const color = state.cor;
+  const item = { id: gerarId(), data: day, texto: text, criadoEm: Date.now(), grifos: color ? [{ inicio: 0, fim: text.length, cor: color }] : [] };
+  if (color) state.marking.add(item.id);
   const operation = (async () => {
     try {
       await salvarItem(item);
@@ -160,7 +160,7 @@ async function adicionarItem() {
       if (state.drafts.get(day) === originalInput) state.drafts.delete(day);
       if (state.data === day && $("novoItem").value === originalInput) { $("novoItem").value = ""; if (!state.turning) $("novoItem").focus(); }
       return true;
-    } catch { return false; }
+    } catch { state.marking.delete(item.id); return false; }
     finally { if (session === state.session) { state.addPromise = null; atualizarStatus(); } }
   })();
   state.addPromise = operation; atualizarStatus(); return operation;
@@ -170,9 +170,21 @@ $("novoItem").addEventListener("input", () => { state.drafts.set(state.data, $("
 $("novoItem").addEventListener("keydown", event => { if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); adicionarItem(); } });
 function normalizarGrifos(highlights, length) {
   if (!Array.isArray(highlights)) return [];
-  return highlights.filter(range => Number.isInteger(range.inicio) && Number.isInteger(range.fim))
-    .map(range => ({ inicio: Math.max(0, range.inicio), fim: Math.min(length, range.fim), cor: corValida(range.cor) }))
-    .filter(range => range.fim > range.inicio).sort((a, b) => a.inicio - b.inicio);
+  return highlights.filter(range => range && Number.isInteger(range.inicio) && Number.isInteger(range.fim))
+    .map(range => ({ inicio: Math.max(0, range.inicio), fim: Math.min(length, range.fim), cor: normalizarCor(range.cor) }))
+    .filter(range => range.cor && range.fim > range.inicio).sort((a, b) => a.inicio - b.inicio);
+}
+function grifosDoItem(item) {
+  // Read-only compatibility: the old app coupled whole-line ink to concluido.
+  // v2 makes ranges authoritative without clearing old fields. Prior releases
+  // could combine whole-line ink with partial ranges, including an empty array.
+  const ranges = normalizarGrifos(item.grifos, item.texto.length);
+  if (item.versaoGrifos === 2) return ranges;
+  const color = normalizarCor(item.cor);
+  const legacyInk = item.concluido === true || (item.concluido === undefined && color);
+  let result = color && legacyInk ? [{ inicio: 0, fim: item.texto.length, cor: color }] : [];
+  for (const range of ranges) result = aplicarTrecho(result, range.inicio, range.fim, range.cor);
+  return result;
 }
 function aplicarTrecho(highlights, start, end, color) {
   const result = [];
@@ -195,7 +207,7 @@ function ajustarGrifos(before, after, highlights) {
 }
 function textoComGrifos(item) {
   let result = "", offset = 0;
-  normalizarGrifos(item.grifos, item.texto.length).forEach(range => {
+  grifosDoItem(item).forEach(range => {
     const start = Math.max(offset, range.inicio); if (range.fim <= start) return;
     result += escaparHTML(item.texto.slice(offset, start)) + '<mark style="--highlight:' + range.cor + '">' + escaparHTML(item.texto.slice(start, range.fim)) + "</mark>"; offset = range.fim;
   });
@@ -213,11 +225,10 @@ function renderizarItens() {
   items.forEach((item, index) => {
     let row = [...list.children].find(node => node.dataset.id === item.id);
     if (!row) { row = document.createElement("article"); row.dataset.id = item.id; row.className = "note-row"; }
-    const signature = JSON.stringify([item.texto, item.concluido, item.cor, item.grifos]);
+    const signature = JSON.stringify([item.texto, grifosDoItem(item)]);
     if (state.editing?.id !== item.id && row.dataset.signature !== signature) {
-      row.dataset.signature = signature; row.className = "note-row" + (item.concluido ? " done" : "");
-      row.style.setProperty("--highlight", corValida(item.cor));
-      row.innerHTML = '<button class="note-check" type="button" data-action="toggle" aria-label="' + (item.concluido ? "Desmarcar anotação" : "Concluir e grifar anotação") + '" aria-pressed="' + Boolean(item.concluido) + '">' + icon("check") + '</button><div class="note-body"><span class="note-text">' + textoComGrifos(item) + '</span></div><div class="note-actions"><button class="icon-button" type="button" data-action="edit" aria-label="Editar anotação" data-tooltip="Editar">' + icon("edit") + '</button><button class="icon-button" type="button" data-action="mark" aria-label="Cor da anotação" data-tooltip="Grifar">' + icon("marker") + '</button><button class="icon-button" type="button" data-action="delete" aria-label="Excluir anotação" data-tooltip="Excluir">' + icon("trash") + "</button></div>";
+      row.dataset.signature = signature; row.className = "note-row";
+      row.innerHTML = '<div class="note-body"><span class="note-text">' + textoComGrifos(item) + '</span></div><div class="note-actions"><button class="icon-button note-options" type="button" data-action="options" aria-label="Opções da anotação" aria-expanded="false">' + icon("more") + '</button><div class="note-tools"><button class="icon-button" type="button" data-action="edit" aria-label="Editar anotação" data-tooltip="Editar">' + icon("edit") + '</button><button class="icon-button" type="button" data-action="mark" aria-label="Marca-texto da anotação" data-tooltip="Grifar">' + icon("marker") + '</button><button class="icon-button" type="button" data-action="delete" aria-label="Excluir anotação" data-tooltip="Excluir">' + icon("trash") + "</button></div></div>";
       if (state.marking.delete(item.id)) row.classList.add("is-marking");
     }
     row.querySelectorAll("[data-action]").forEach(button => { button.disabled = state.busyItems.has(item.id); });
@@ -230,26 +241,27 @@ $("listaItens").addEventListener("click", async event => {
   if (!button || !row || state.busyItems.has(row.dataset.id)) return;
   let item = encontrarItem(row.dataset.id); if (!item) return;
   const action = button.dataset.action;
+  if (action === "options") {
+    const open = !row.classList.contains("actions-open");
+    fecharOpcoes(); row.classList.toggle("actions-open", open); button.setAttribute("aria-expanded", String(open)); return;
+  }
   if (action === "edit") { await iniciarEdicao(item); return; }
   if (action === "finish-edit") { await finalizarEdicao(true); return; }
   if (action === "mark") { abrirPaleta(button, { id: item.id, whole: true }); return; }
-  if (!await finalizarEdicao(true)) return;
+  if (action !== "delete" || !await finalizarEdicao(true)) return;
   item = encontrarItem(item.id); if (!item) return;
   state.busyItems.add(item.id); renderizarItens();
   try {
-    if (action === "toggle") {
-      if (!item.concluido) state.marking.add(item.id);
-      await salvarItem({ ...item, concluido: !item.concluido, cor: !item.concluido ? state.cor : item.cor });
-    } else if (action === "delete") { const reference = referenciaItem(item.id); await gravar(() => deleteDoc(reference)); mostrarToast("Anotação excluída."); }
+    const reference = referenciaItem(item.id); await gravar(() => deleteDoc(reference)); mostrarToast("Anotação excluída.");
   } catch { state.marking.delete(item.id); }
   finally { state.busyItems.delete(item.id); renderizar(); }
 });
 async function iniciarEdicao(item) {
   if (state.editing?.id === item.id || !await finalizarEdicao(true)) return;
   const row = [...$("listaItens").children].find(node => node.dataset.id === item.id); if (!row) return;
-  state.editing = { id: item.id, value: item.texto, savedText: item.texto, grifos: item.grifos || [], inFlight: null, session: state.session };
+  state.editing = { id: item.id, value: item.texto, savedText: item.texto, grifos: grifosDoItem(item), inFlight: null, session: state.session };
   row.classList.add("is-editing");
-  row.querySelector(".note-body").innerHTML = '<label class="sr-only" for="editarItem">Editar anotação</label><textarea id="editarItem" class="inline-editor" maxlength="140" rows="3"></textarea><div class="editing-footer"><span>As alterações são salvas automaticamente.</span><button type="button" class="btn btn-ghost" data-action="finish-edit">Concluir</button></div>';
+  row.querySelector(".note-body").innerHTML = '<label class="sr-only" for="editarItem">Editar anotação</label><textarea id="editarItem" class="inline-editor" maxlength="140" rows="3"></textarea><div class="editing-footer"><span>As alterações são salvas automaticamente.</span><button type="button" class="btn btn-ghost" data-action="finish-edit">Fechar edição</button></div>';
   $("editarItem").value = item.texto; $("editarItem").focus(); $("editarItem").setSelectionRange(item.texto.length, item.texto.length);
   $("editarItem").addEventListener("input", event => {
     if (!state.editing) return;
@@ -270,14 +282,14 @@ async function finalizarEdicao(close) {
     return finalizarEdicao(close);
   }
   const text = editing.value.trim();
-  if (!text) { if (close) mostrarToast("Escreva algo antes de concluir a edição.", "erro"); return false; }
+  if (!text) { if (close) mostrarToast("Escreva algo antes de fechar a edição.", "erro"); return false; }
   if (text !== editing.savedText) {
     const current = encontrarItem(editing.id);
     if (!current) { mostrarToast("Esta anotação foi excluída em outro dispositivo. Copie seu texto antes de sair.", "erro"); return false; }
     const highlights = ajustarGrifos(editing.savedText, text, normalizarGrifos(editing.grifos, editing.savedText.length));
     editing.inFlight = (async () => {
       try {
-        const updated = { ...current, texto: text }; if (Array.isArray(current.grifos)) updated.grifos = highlights;
+        const updated = { ...current, texto: text, grifos: highlights };
         await salvarItem(updated); editing.savedText = text; editing.grifos = highlights; return true;
       } catch { return false; }
       finally { editing.inFlight = null; atualizarStatus(); }
@@ -338,7 +350,7 @@ $("navHoje").addEventListener("click", () => navegarPara(hojeISO()));
 $("novaAnotacao").addEventListener("click", () => { fecharPainel(false); $("novoItem").focus(); });
 $("dataSelecionada").addEventListener("change", async event => { await navegarPara(event.target.value); event.target.value = state.data; });
 function renderizar() {
-  const date = isoParaData(state.data), items = itensDoDia(), completed = items.filter(item => item.concluido).length;
+  const date = isoParaData(state.data), items = itensDoDia();
   $("dataSelecionada").value = state.data;
   $("dataExtenso").textContent = date.toLocaleDateString("pt-BR", { weekday: "long" });
   $("anoData").textContent = date.getFullYear();
@@ -346,11 +358,8 @@ function renderizar() {
   $("dataTopbar").textContent = state.data === hojeISO() ? "Hoje" : date.toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
   $("contadorItens").textContent = items.length + (items.length === 1 ? " item" : " itens");
   $("numeroPagina").textContent = date.toLocaleDateString("pt-BR");
-  $("totalDia").textContent = items.length; $("concluidosDia").textContent = completed;
-  const progress = items.length ? Math.round(completed / items.length * 100) : 0;
-  $("progressoDia").setAttribute("aria-valuenow", progress);
-  $("progressoDia").firstElementChild.style.transform = "scaleX(" + progress / 100 + ")";
-  $("resumoTexto").textContent = !items.length ? "Seu dia começa com uma anotação." : completed === items.length ? "Tudo concluído. Espaço para o próximo passo." : (items.length - completed) + " " + (items.length - completed === 1 ? "anotação em aberto." : "anotações em aberto.");
+  $("totalDia").textContent = items.length;
+  $("resumoTexto").textContent = !items.length ? "Seu dia começa com uma anotação." : "Ideias e memórias guardadas nesta página.";
   $("paginaContexto").textContent = state.data === hojeISO() ? "Uma página para o seu hoje" : "Cada dia tem sua própria história";
   $("navHoje").classList.toggle("active", state.data === hojeISO());
   $("navHoje").setAttribute("aria-current", state.data === hojeISO() ? "date" : "false");
@@ -411,55 +420,142 @@ document.addEventListener("selectionchange", () => {
   if (!$("paleta").hidden) return;
   state.selectedRange = capturarSelecao(); $("abrirPaleta").querySelector("span").textContent = state.selectedRange ? "Grifar seleção" : "Marca-texto";
 });
-$("markerColors").innerHTML = COLORS.map(color => '<button type="button" class="marker-color" data-color="' + color.color + '" data-name="' + color.name + '" style="--marker:var(--marker-' + color.token + ')" aria-label="' + color.name + '" data-tooltip="' + color.name + '" aria-pressed="' + (color.name === state.corNome) + '"></button>').join("");
+const picker = { color: "#E85D75", ...hexParaHSV("#E85D75"), pointer: null, saving: false };
+let recentColors = [];
+try { const saved = JSON.parse(preference("caderno-recent-colors") || "[]"); if (Array.isArray(saved)) recentColors = [...new Set(saved.map(normalizarCor).filter(Boolean))].slice(0, 6); } catch {}
+function atualizarAmostra() {
+  $("amostraCor").style.backgroundColor = state.cor || "";
+  $("amostraCor").classList.toggle("is-none", !state.cor);
+  $("amostraCor").setAttribute("aria-label", state.cor || "Sem marca-texto");
+}
+function renderizarRecentes() {
+  $("coresRecentes").innerHTML = recentColors.length ? recentColors.map(color => '<button type="button" class="recent-color" data-color="' + color + '" style="--marker:' + color + '" aria-label="Usar ' + color + '" title="' + color + '"></button>').join("") : '<span class="recent-empty">As cores que você usar ficam aqui.</span>';
+}
+function lembrarCor(color) {
+  if (!color) return;
+  recentColors = [color, ...recentColors.filter(old => old !== color)].slice(0, 6);
+  preference("caderno-recent-colors", JSON.stringify(recentColors)); renderizarRecentes();
+}
+function atualizarPicker(color, fromHSV = false) {
+  picker.color = color;
+  if (!fromHSV) Object.assign(picker, hexParaHSV(color));
+  $("campoCor").style.setProperty("--hue", hsvParaHex(picker.h, 1, 1));
+  $("cursorCor").style.left = picker.s * 100 + "%";
+  $("cursorCor").style.top = (1 - picker.v) * 100 + "%";
+  $("campoCor").setAttribute("aria-label", "Saturação " + Math.round(picker.s * 100) + "%, brilho " + Math.round(picker.v * 100) + "%");
+  $("tonalidadeCor").value = picker.h;
+  $("tonalidadeCor").setAttribute("aria-valuetext", Math.round(picker.h) + " graus");
+  $("hexCor").value = color; $("hexCor").setAttribute("aria-invalid", "false");
+  $("erroCor").textContent = ""; $("aplicarGrifo").disabled = picker.saving;
+  $("corNativa").value = color.toLowerCase();
+  $("previewGrifo").style.setProperty("--highlight", color);
+  $("corSelecionadaTexto").textContent = color;
+}
 function posicionarPaleta() {
   if ($("paleta").hidden) return;
   const anchor = state.paletteAnchor?.isConnected ? state.paletteAnchor : $("abrirPaleta");
   const bounds = anchor.getBoundingClientRect(), palette = $("paleta"), viewport = window.visualViewport;
+  const left = viewport?.offsetLeft || 0, top = viewport?.offsetTop || 0;
   const width = viewport?.width || innerWidth, height = viewport?.height || innerHeight;
-  palette.style.left = Math.max(12, Math.min(bounds.right - palette.offsetWidth, width - palette.offsetWidth - 12)) + "px";
-  palette.style.top = (bounds.bottom + palette.offsetHeight + 12 < height ? bounds.bottom + 8 : Math.max(12, bounds.top - palette.offsetHeight - 8)) + "px";
+  const style = getComputedStyle(palette), gap = edge => parseFloat(style.getPropertyValue("scroll-margin-" + edge)) || 12;
+  palette.style.maxHeight = Math.max(80, height - gap("top") - gap("bottom")) + "px";
+  palette.style.left = Math.max(left + gap("left"), Math.min(bounds.right - palette.offsetWidth, left + width - palette.offsetWidth - gap("right"))) + "px";
+  palette.style.top = Math.max(top + gap("top"), Math.min(bounds.bottom + 8, top + height - palette.offsetHeight - gap("bottom"))) + "px";
 }
 function abrirPaleta(anchor, target) {
+  if (picker.saving) return;
   state.paletteTarget = target || state.selectedRange; state.paletteAnchor = anchor;
+  const item = state.paletteTarget && encontrarItem(state.paletteTarget.id);
+  const ranges = item ? grifosDoItem(item) : [];
+  const range = state.paletteTarget?.whole ? ranges[0] : ranges.find(r => r.inicio <= state.paletteTarget?.inicio && r.fim > state.paletteTarget.inicio);
+  atualizarPicker(range?.cor || state.cor || recentColors[0] || "#E85D75");
   $("paleta").hidden = false; $("abrirPaleta").setAttribute("aria-expanded", "true");
-  $("dicaPaleta").textContent = state.paletteTarget ? (state.paletteTarget.whole ? "Aplique uma cor à anotação inteira." : "A cor será aplicada ao trecho selecionado.") : "Escolha a cor para suas próximas marcações.";
-  $("removerGrifo").disabled = !state.paletteTarget; posicionarPaleta(); $("markerColors").querySelector('[aria-pressed="true"]')?.focus();
+  $("dicaPaleta").textContent = state.paletteTarget ? (state.paletteTarget.whole ? "Cor da anotação inteira." : "Cor do trecho selecionado.") : "Cor para a nova anotação.";
+  $("aplicarGrifo").textContent = state.paletteTarget ? "Aplicar" : "Usar cor";
+  $("removerGrifo").textContent = state.paletteTarget ? "Remover marca-texto" : "Sem marca-texto";
+  renderizarRecentes(); posicionarPaleta(); $("campoCor").focus({ preventScroll: true });
 }
 function fecharPaleta(restoreFocus = true) {
   const wasOpen = !$("paleta").hidden; $("paleta").hidden = true; $("abrirPaleta").setAttribute("aria-expanded", "false");
-  if (restoreFocus && wasOpen) (state.paletteAnchor?.isConnected ? state.paletteAnchor : $("abrirPaleta")).focus();
-  state.paletteTarget = null;
+  if (restoreFocus && wasOpen) (state.paletteAnchor?.isConnected ? state.paletteAnchor : $("abrirPaleta")).focus({ preventScroll: true });
+  state.paletteTarget = null; picker.pointer = null;
 }
 $("abrirPaleta").addEventListener("pointerdown", event => { if (event.pointerType === "mouse") event.preventDefault(); });
 $("abrirPaleta").addEventListener("click", () => { if ($("paleta").hidden) abrirPaleta($("abrirPaleta")); else fecharPaleta(); });
 $("fecharPaleta").addEventListener("click", () => fecharPaleta());
-async function aplicarMarca(color) {
-  const target = state.paletteTarget; if (!target) return;
-  if (!await finalizarEdicao(true)) return;
-  const item = encontrarItem(target.id); if (!item || state.busyItems.has(item.id)) return;
-  state.busyItems.add(item.id); if (color) state.marking.add(item.id);
-  try {
-    const updated = target.whole ? { ...item, concluido: !!color, cor: color || item.cor, ...(color ? {} : { grifos: [] }) }
-      : { ...item, grifos: aplicarTrecho(normalizarGrifos(item.grifos, item.texto.length), target.inicio, target.fim, color) };
-    await salvarItem(updated); state.selectedRange = null; window.getSelection()?.removeAllRanges(); fecharPaleta();
-  } catch { state.marking.delete(item.id); }
-  finally { state.busyItems.delete(item.id); renderizar(); }
+function escolherNoCampo(event) {
+  const bounds = $("campoCor").getBoundingClientRect();
+  picker.s = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+  picker.v = 1 - Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
+  atualizarPicker(hsvParaHex(picker.h, picker.s, picker.v), true);
 }
-$("markerColors").addEventListener("click", event => {
-  const button = event.target.closest("[data-color]"); if (!button) return;
-  state.cor = button.dataset.color; state.corNome = button.dataset.name; $("corSelecionadaTexto").textContent = state.corNome;
-  $("amostraCor").style.background = state.cor;
-  $("markerColors").querySelectorAll("[data-color]").forEach(node => node.setAttribute("aria-pressed", String(node === button)));
-  aplicarMarca(state.cor);
+$("campoCor").addEventListener("pointerdown", event => {
+  if (event.button !== 0 || picker.saving) return;
+  event.preventDefault(); picker.pointer = event.pointerId;
+  $("campoCor").setPointerCapture(event.pointerId); $("campoCor").focus(); escolherNoCampo(event);
 });
+$("campoCor").addEventListener("pointermove", event => { if (picker.pointer === event.pointerId) escolherNoCampo(event); });
+for (const name of ["pointerup", "pointercancel", "lostpointercapture"]) $("campoCor").addEventListener(name, event => {
+  if (picker.pointer === event.pointerId) { if (name === "pointerup") escolherNoCampo(event); picker.pointer = null; }
+});
+$("campoCor").addEventListener("keydown", event => {
+  const delta = event.shiftKey ? .1 : .01;
+  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key) || picker.saving) return;
+  event.preventDefault();
+  if (event.key === "ArrowLeft") picker.s -= delta;
+  if (event.key === "ArrowRight") picker.s += delta;
+  if (event.key === "ArrowUp") picker.v += delta;
+  if (event.key === "ArrowDown") picker.v -= delta;
+  picker.s = Math.max(0, Math.min(1, picker.s)); picker.v = Math.max(0, Math.min(1, picker.v));
+  atualizarPicker(hsvParaHex(picker.h, picker.s, picker.v), true);
+});
+$("tonalidadeCor").addEventListener("input", event => { picker.h = Number(event.target.value); atualizarPicker(hsvParaHex(picker.h, picker.s, picker.v), true); });
+$("hexCor").addEventListener("input", event => {
+  const raw = event.target.value.trim(), color = /^#?[\da-f]{6}$/i.test(raw) ? normalizarCor("#" + raw.replace(/^#/, "")) : null;
+  if (color) atualizarPicker(color);
+  else { $("hexCor").setAttribute("aria-invalid", "true"); $("erroCor").textContent = "Use 6 dígitos HEX, como #E85D75."; $("aplicarGrifo").disabled = true; }
+});
+$("corNativa").addEventListener("input", event => atualizarPicker(normalizarCor(event.target.value)));
+$("coresRecentes").addEventListener("click", event => { const button = event.target.closest("[data-color]"); if (button) atualizarPicker(button.dataset.color); });
+async function aplicarMarca(color) {
+  if (picker.saving) return;
+  const target = state.paletteTarget, session = state.session;
+  if (!target) { state.cor = color; atualizarAmostra(); lembrarCor(color); fecharPaleta(); return; }
+  picker.saving = true; $("aplicarGrifo").disabled = true; $("removerGrifo").disabled = true;
+  try {
+    if (!await finalizarEdicao(true) || session !== state.session) return;
+    const item = encontrarItem(target.id); if (!item || state.busyItems.has(item.id)) return;
+    state.busyItems.add(item.id); if (color) state.marking.add(item.id);
+    try {
+      const grifos = target.whole ? (color ? [{ inicio: 0, fim: item.texto.length, cor: color }] : [])
+        : aplicarTrecho(grifosDoItem(item), target.inicio, target.fim, color);
+      await salvarItem({ ...item, grifos });
+      if (session === state.session) { lembrarCor(color); state.selectedRange = null; window.getSelection()?.removeAllRanges(); fecharPaleta(); }
+    } catch { state.marking.delete(item.id); }
+    finally { if (session === state.session) { state.busyItems.delete(item.id); renderizar(); } }
+  } finally { picker.saving = false; $("aplicarGrifo").disabled = $("hexCor").getAttribute("aria-invalid") === "true"; $("removerGrifo").disabled = false; }
+}
+$("aplicarGrifo").addEventListener("click", () => aplicarMarca(picker.color));
 $("removerGrifo").addEventListener("click", () => aplicarMarca(null));
-document.addEventListener("pointerdown", event => { if (!$("paleta").hidden && !event.target.closest("#paleta, #abrirPaleta, [data-action='mark']")) fecharPaleta(false); });
-$("paleta").addEventListener("keydown", event => {
-  const colors = [...$("markerColors").children], index = colors.indexOf(document.activeElement), movement = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 7, ArrowUp: -7 };
-  if (index >= 0 && event.key in movement) { event.preventDefault(); colors[(index + movement[event.key] + colors.length) % colors.length].focus(); }
+function fecharOpcoes() {
+  $("listaItens").querySelectorAll(".actions-open").forEach(row => { row.classList.remove("actions-open"); row.querySelector("[data-action='options']")?.setAttribute("aria-expanded", "false"); });
+}
+document.addEventListener("pointerdown", event => {
+  if (!$("paleta").hidden && !event.target.closest("#paleta, #abrirPaleta, [data-action='mark']")) fecharPaleta(false);
+  if (!event.target.closest(".note-actions")) fecharOpcoes();
 });
-$("workspace").addEventListener("scroll", () => { if (!$("paleta").hidden) posicionarPaleta(); }, { passive: true });
+$("listaItens").addEventListener("keydown", event => {
+  if (event.key === "Escape") { const row = event.target.closest(".actions-open"); fecharOpcoes(); row?.querySelector("[data-action='options']")?.focus(); }
+});
+$("workspace").addEventListener("scroll", posicionarPaleta, { passive: true });
+function atualizarViewport() {
+  const viewport = window.visualViewport;
+  document.documentElement.style.setProperty("--visible-height", (viewport?.height || innerHeight) + "px");
+  posicionarPaleta();
+  if (document.activeElement === $("novoItem")) requestAnimationFrame(() => $("btnAdicionar").scrollIntoView({ block: "nearest" }));
+}
+window.visualViewport?.addEventListener("resize", atualizarViewport);
+window.visualViewport?.addEventListener("scroll", posicionarPaleta);
 /* Off-canvas panels use focus containment and inert backgrounds. */
 function atualizarPaineis() {
   const app = $("aplicativo");
@@ -530,6 +626,6 @@ window.addEventListener("beforeunload", event => {
   if (state.pending || [...state.drafts.values()].some(value => value.trim()) || (state.editing && state.editing.value.trim() !== state.editing.savedText)) { event.preventDefault(); event.returnValue = ""; }
 });
 aplicarTema(document.documentElement.dataset.theme);
-$("amostraCor").style.background = state.cor;
+atualizarAmostra(); atualizarViewport();
 atualizarPaineis();
 renderizar();

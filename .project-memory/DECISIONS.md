@@ -5,10 +5,49 @@ o status da antiga para `Substituída por DEC-XXXX`, sem apagar seu contexto.
 As razões originais das escolhas de código anteriores à memória não são conhecidas;
 observações do baseline estão identificadas como tal.
 
+## DEC-0008
+
+Título: Diário sem tarefas; destaque definido por grifos independentes de conclusão.
+Status: Ativa. Substitui DEC-0006 nos aspectos de interação e paleta de cores.
+Data: 2026-09-23. Origem: PROMPT-0004 / CHANGE-0004.
+Motivo: O usuário solicitou retirar integralmente checkbox/conclusão, criar acima
+da lista e oferecer qualquer cor, mantendo o shell moderno.
+Impacto: Removidos controles de conclusão, resumo/progresso e paleta fixa. Menu
+de opções mantém edição, grifo e exclusão. Picker próprio HSV/HEX/nativo/recentes,
+sem biblioteca. Preview local durante drag; gravação somente ao aplicar/adicionar.
+
+Dados: manter coleção e setDoc merge. Nenhuma alteração de auth/configuração ou
+regras remotas; nenhuma migração em massa. cor/concluido legados não são escritos
+pelas novas ações. Reutiliza grifos e adiciona discriminador versaoGrifos:2 para
+distinguir remoção explícita de arrays vazios antigos com tinta integral ativa.
+Sem essa distinção, remover grifo faria a cor histórica reaparecer ou exigiria
+alterar campos de conclusão. Apenas notas afetadas recebem v2. Adaptador de
+leitura preserva toda a tinta antiga e normaliza cores; sem cor fica sem grifo.
+Regras que restrinjam campos precisam aceitar v2; integração real pendente.
+Arquivos: app.js, color.js, index.html, style.css, ARCHITECTURE.md, testes.
+
+## DEC-0009
+
+Título: Restaurar a tipografia real do histórico, restrita ao conteúdo das notas.
+Status: Ativa.
+Data: 2026-09-23. Origem: PROMPT-0004 / CHANGE-0004.
+Evidência: f4b7e9f e CP-0003: .note-text usava Segoe Print, Bradley Hand,
+Comic Sans MS, cursive; 19 px desktop e 17 px mobile. Não havia @font-face,
+Google Fonts nem arquivo de fonte versionado no estado antigo inspecionado.
+Decisão: Usar Segoe Print, Bradley Hand, cursive, sem fallback explícito Comic
+Sans conforme solicitação. Restaurar fonte do sistema, sem baixar/redistribuir
+arquivos proprietários. 19 px desktop / 18 px mobile, line-height 1.65, tracking
+.01em nas notas; UI e compositor mantêm fonte do design system. Inline-editor e
+preview usam caligrafia por representarem conteúdo da nota.
+Validação: CDP identificou Segoe Print efetivamente renderizada no Windows.
+Limite: Em dispositivos sem essas fontes, aparência depende do cursive local;
+não foi inventada uma substituta nem prometida fonte idêntica em todos os SOs.
+Arquivos: style.css; histórico Git; tests/.artifacts/fonts.json (ignorado).
+
 ## DEC-0006
 
 Título: Design system aplicado ao diário, preservando notas e contratos legados.
-Status: Ativa.
+Status: Substituída por DEC-0008 quanto a conclusão/paleta; texto histórico preservado.
 Data: 2026-09-23 (registro da implementação iniciada em 2026-09-22).
 Origem: PROMPT-0002, concluído em PROMPT-0003 / CHANGE-0003.
 

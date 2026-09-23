@@ -3,6 +3,66 @@
 Adicione novas entradas no topo, após esta introdução. Preserve as anteriores;
 não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
+## CHANGE-0004
+
+Data: 2026-09-23. Hora inicial: 12:34:58 -03:00.
+Prompt: PROMPT-0004. Inicial: CP-0006, `3ab3b527c06d0d76990d9483c7e295af8a36811f`.
+Final: CP-0007, commit em `refs/tags/CP-0007`.
+
+### Objetivo
+
+Criar acima da lista, retirar tarefas, restaurar caligrafia e usar marca-texto livre.
+
+### Arquivos alterados
+
+index.html, style.css, app.js, novo color.js; tests/browser-checks.js, browser.ps1,
+firebase.mock.js, responsive-checks.js, novo reload-checks.js e README.md;
+CURRENT_STATE.md, ARCHITECTURE.md, DECISIONS.md, PROMPTS.md, CHANGELOG.md,
+KNOWN_ISSUES.md e checkpoints CP-0006/CP-0007 na memória.
+
+### Alterações realizadas / funcionalidades afetadas
+
+Compositor acima da lista; removidos checkboxes, ações/estado de conclusão e
+resumo de tarefas. Menu discreto de opções preserva edição, grifo e exclusão.
+Picker livre próprio HSV/HEX/nativo, preview em tempo real, seis recentes locais,
+remoção e grifo opcional na criação. Arraste apenas atualiza preview; aplicar
+grava. Highlights inline com opacidade .38/.25 e animação 340 ms.
+Fonte original localizada em f4b7e9f/CP-0003: Segoe Print, Bradley Hand; restaurada
+apenas no conteúdo, sem redistribuição nem escolha de fonte nova. Comic Sans
+foi retirado do fallback por pedido. UI conserva o design system.
+
+Compatibilidade: grifos existentes adaptados em leitura. Novas gravações usam
+versaoGrifos:2 para distinguir remoção explícita de arrays vazios históricos
+com grifo integral; cor/concluido antigos permanecem intactos via merge.
+Importação legada deixou de inventar rosa quando falta cor. Não houve alteração
+de autenticação, firebase.js, regras ou dados remotos.
+
+### Possíveis impactos
+
+Regras remotas precisam aceitar grifos/versaoGrifos e notas sem campos de tarefa.
+Fonte depende das famílias instaladas no dispositivo. Sem migração destrutiva.
+Durante finalização, usuário enviou nova solicitação que restaura conclusão e
+substitui menu de opções/cor individual; será tratada como PROMPT-0005 após CP-0007.
+
+### Testes realizados
+
+Runner PowerShell/CDP: 57 verificações funcionais, 6 de reload real com fixtures
+persistidas pelo mock e 11 de teclado/mobile. Nove larguras (320–1920 px) x dois
+temas sem overflow. Mouse e toque via Input.dispatch* alteraram preview sem
+escritas; viewport 390x360 manteve Adicionar e picker visíveis. Movimento reduzido
+e console sem erros. Fontes renderizadas via CDP: Segoe Print (não customizada).
+Capturas 1440/dark, 375/light e picker mobile inspecionadas. Cálculo de contraste
+nos extremos das misturas: 6,63:1 claro e 6,91:1 escuro (não certificação WCAG).
+SDK real: login/seletor inicializados sem erros, sem autenticar/gravar remotamente.
+git diff --check e firebase.js preservado. A última alteração após suíte foi
+somente rótulo Concluir → Fechar edição, sem alteração de lógica.
+
+### Resultado
+
+Implementação local concluída; conta real, regras, teclado físico mobile,
+Safari/iOS, leitores de tela e outras fontes de SO exigem teste manual.
+Checkpoint intermediário preservado antes da nova direção de PROMPT-0005.
+
 ## CHANGE-0003
 
 Data: 2026-09-23.

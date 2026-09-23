@@ -98,14 +98,36 @@ try {
     Invoke-JS 'new Promise(resolve => { const check = () => document.readyState === "complete" ? resolve(true) : setTimeout(check, 50); check(); })' | Out-Null
     if ($Live) {
         Start-Sleep -Seconds 5
-        $result = Invoke-JS '({title:document.title,login:!document.getElementById("telaLogin").hidden,colors:document.querySelectorAll(".marker-color").length})'
+        $result = Invoke-JS '({title:document.title,login:!document.getElementById("telaLogin").hidden,picker:!!document.getElementById("campoCor"),initialized:!!document.getElementById("tituloData").textContent})'
         Write-Output ($result | ConvertTo-Json -Compress)
+        if (-not $result.login -or -not $result.initialized -or -not $result.picker) { throw 'Inicializacao real incompleta.' }
     } else {
         $checks = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'browser-checks.js'))
         $result = Invoke-JS ('(' + $checks + ')()')
         $result | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $artifactDir 'functional.json') -Encoding UTF8
         Write-Output ($result | ConvertTo-Json -Depth 10 -Compress)
         if (-not $result.ok) { throw 'Os testes funcionais falharam.' }
+        Invoke-CDP 'Page.reload' | Out-Null
+        Start-Sleep -Milliseconds 350
+        $reloadChecks = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'reload-checks.js'))
+        $reload = Invoke-JS ('(' + $reloadChecks + ')()')
+        $reload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $artifactDir 'reload.json') -Encoding UTF8
+        Write-Output ($reload | ConvertTo-Json -Depth 10 -Compress)
+        Invoke-CDP 'DOM.enable' | Out-Null
+        Invoke-CDP 'CSS.enable' | Out-Null
+        $dom = Invoke-CDP 'DOM.getDocument'
+        $noteNode = Invoke-CDP 'DOM.querySelector' @{ nodeId=$dom.root.nodeId; selector='.note-text' }
+        $fonts = Invoke-CDP 'CSS.getPlatformFontsForNode' @{ nodeId=$noteNode.nodeId }
+        $fonts | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $artifactDir 'fonts.json') -Encoding UTF8
+        Invoke-JS 'document.getElementById("abrirPaleta").click()' | Out-Null
+        $field = Invoke-JS '(()=>{const r=document.getElementById("campoCor").getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,before:document.getElementById("hexCor").value,writes:window.__mock.writes.length}})()'
+        Invoke-CDP 'Input.dispatchMouseEvent' @{ type='mousePressed'; x=($field.x+$field.w*.2); y=($field.y+$field.h*.2); button='left'; clickCount=1 } | Out-Null
+        Invoke-CDP 'Input.dispatchMouseEvent' @{ type='mouseMoved'; x=($field.x+$field.w*.8); y=($field.y+$field.h*.7); buttons=1 } | Out-Null
+        Invoke-CDP 'Input.dispatchMouseEvent' @{ type='mouseReleased'; x=($field.x+$field.w*.8); y=($field.y+$field.h*.7); button='left'; clickCount=1 } | Out-Null
+        $mouse = Invoke-JS '({color:document.getElementById("hexCor").value,writes:window.__mock.writes.length,preview:document.getElementById("previewGrifo").style.getPropertyValue("--highlight")})'
+        if ($mouse.color -eq $field.before -or $mouse.color -ne $mouse.preview -or $mouse.writes -ne $field.writes) { throw 'Arraste de mouse/preview falhou.' }
+        Invoke-JS 'document.getElementById("fecharPaleta").click()' | Out-Null
+        Write-Output 'MOUSE_DRAG=PASS (preview sem escrita remota)'
         $viewports = @()
         foreach ($width in @(1920,1440,1280,1024,768,430,390,375,320)) {
             foreach ($theme in @('light','dark')) {
@@ -127,6 +149,29 @@ try {
         $mobileResult = Invoke-JS ('(' + $mobileChecks + ')()')
         $mobileResult | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $artifactDir 'mobile.json') -Encoding UTF8
         Write-Output ($mobileResult | ConvertTo-Json -Depth 10 -Compress)
+        Invoke-CDP 'Emulation.setTouchEmulationEnabled' @{ enabled=$true; maxTouchPoints=1 } | Out-Null
+        Invoke-JS 'document.getElementById("abrirPaleta").click()' | Out-Null
+        $field = Invoke-JS '(()=>{const r=document.getElementById("campoCor").getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,before:document.getElementById("hexCor").value,writes:window.__mock.writes.length}})()'
+        Invoke-CDP 'Input.dispatchTouchEvent' @{ type='touchStart'; touchPoints=@(@{x=($field.x+$field.w*.2);y=($field.y+$field.h*.3)}) } | Out-Null
+        Invoke-CDP 'Input.dispatchTouchEvent' @{ type='touchMove'; touchPoints=@(@{x=($field.x+$field.w*.7);y=($field.y+$field.h*.8)}) } | Out-Null
+        Invoke-CDP 'Input.dispatchTouchEvent' @{ type='touchEnd'; touchPoints=@() } | Out-Null
+        $touch = Invoke-JS '({color:document.getElementById("hexCor").value,writes:window.__mock.writes.length,preview:document.getElementById("previewGrifo").style.getPropertyValue("--highlight")})'
+        if ($touch.color -eq $field.before -or $touch.color -ne $touch.preview -or $touch.writes -ne $field.writes) { throw 'Arraste de toque/preview falhou.' }
+        $shot = Invoke-CDP 'Page.captureScreenshot' @{ format='png'; captureBeyondViewport=$false }
+        [IO.File]::WriteAllBytes((Join-Path $artifactDir 'picker-mobile.png'), [Convert]::FromBase64String($shot.data))
+        Invoke-JS 'document.getElementById("fecharPaleta").click()' | Out-Null
+        Write-Output 'TOUCH_DRAG=PASS (preview sem escrita remota)'
+        Invoke-CDP 'Emulation.setDeviceMetricsOverride' @{ width=390; height=800; deviceScaleFactor=1; mobile=$true } | Out-Null
+        Invoke-JS 'document.getElementById("novoItem").focus()' | Out-Null
+        Invoke-CDP 'Emulation.setDeviceMetricsOverride' @{ width=390; height=360; deviceScaleFactor=1; mobile=$true } | Out-Null
+        $shortViewport = Invoke-JS 'new Promise(resolve=>setTimeout(()=>{const b=document.getElementById("btnAdicionar").getBoundingClientRect();const v=visualViewport;resolve({top:b.top,bottom:b.bottom,height:v.height,offset:v.offsetTop,overflow:document.documentElement.scrollWidth>innerWidth});},150))'
+        if ($shortViewport.overflow -or $shortViewport.bottom -gt ($shortViewport.height+$shortViewport.offset) -or $shortViewport.top -lt $shortViewport.offset) { throw 'Adicionar oculto no viewport reduzido.' }
+        Invoke-JS 'document.getElementById("abrirPaleta").click()' | Out-Null
+        $shortPicker = Invoke-JS '(()=>{const r=document.getElementById("paleta").getBoundingClientRect();return r.top>=visualViewport.offsetTop && r.bottom<=visualViewport.offsetTop+visualViewport.height})()'
+        if (-not $shortPicker) { throw 'Paleta saiu do viewport reduzido.' }
+        Invoke-JS 'document.getElementById("fecharPaleta").click()' | Out-Null
+        Invoke-CDP 'Emulation.setDeviceMetricsOverride' @{ width=390; height=1000; deviceScaleFactor=1; mobile=$false } | Out-Null
+        Write-Output 'SHORT_VIEWPORT=PASS (Adicionar e seletor em 390x360; teclado fisico requer teste manual)'
         Invoke-CDP 'Emulation.setEmulatedMedia' @{ features=@(@{name='prefers-reduced-motion';value='reduce'}) } | Out-Null
         $reduced = Invoke-JS '(async()=>{const before=document.getElementById("dataSelecionada").value;document.getElementById("proximoDia").click();await new Promise(r=>setTimeout(r,200));return {changed:document.getElementById("dataSelecionada").value!==before,animations:document.getElementById("pagina").getAnimations().length}})()'
         if (-not $reduced.changed -or $reduced.animations -ne 0) { throw 'Falha em reduced-motion.' }

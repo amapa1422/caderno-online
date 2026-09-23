@@ -1,6 +1,6 @@
 ﻿# Estado atual
 
-Atualizado em: 2026-09-23 — PROMPT-0003 / CHANGE-0003.
+Atualizado em: 2026-09-23 — PROMPT-0004 / CHANGE-0004.
 Este arquivo descreve somente o presente. Histórico em CHANGELOG.md.
 
 ## Projeto e funcionalidades
@@ -16,11 +16,18 @@ com Firebase Auth e sincronização Firestore em tempo real.
 - Navegação por data, calendário, Hoje e dia anterior/seguinte com virada de folha.
 - Painéis móveis com fundo inerte, Escape, contenção e devolução de foco.
 - Inclusão explícita de anotações de até 140 caracteres por Adicionar/Enter;
-  Shift+Enter insere nova linha. Novas notas não têm autosave.
+  Shift+Enter insere nova linha. Compositor acima da lista, com grifo opcional.
+  Novas notas não têm autosave.
 - Edição de notas existentes com autosave após 650 ms, salvamento serializado
   e preservação de texto em falhas. Navegação aguarda inclusão/edição pendente.
-- Conclusão/desmarcação, exclusão imediata e 13 cores de marca-texto.
-- Grifo de nota inteira e de trechos selecionados, recoloração e remoção.
+- Anotações sem checkbox, conclusão, progresso ou estado de tarefa.
+- Fonte original Segoe Print nas notas, com Bradley Hand/cursive como fallbacks
+  do sistema; tipografia do design system preservada no restante da interface.
+- Marca-texto livre: campo saturação/brilho, barra Hue, HEX, seletor nativo,
+  preview ao vivo, seis cores recentes locais e opção sem marca-texto.
+- Grifo de nota inteira/trechos, recoloração e remoção; animação de passada de
+  340 ms e transparência ajustada por tema. Arraste não escreve no Firestore.
+- Botão discreto de opções em cada nota: edição, marca-texto e exclusão imediata.
 - Feedback de gravação, carregamento, erro/conexão e movimento reduzido.
 - Rascunhos separados por dia em memória da aba, limpos ao mudar de sessão;
   aviso de saída com texto pendente. Não persistem após fechar/recarregar a aba.
@@ -41,6 +48,7 @@ Sem framework, bundler, package.json ou pipeline de deploy versionados.
 | index.html | Login, shell, painéis, compositor, paleta, SVGs e tema inicial. |
 | style.css | Tokens da referência, componentes, temas e responsividade. |
 | app.js | Auth, migração, gravação, edição, grifos, calendário e interação. |
+| color.js | Conversão HSV/HEX e normalização compatível de cores, sem bibliotecas. |
 | firebase.js | Configuração e exports Firebase, preservados do baseline. |
 | icone.png | Favicon e apple-touch-icon existente. |
 | design_system.html | Referência visual standalone incorporada em PROMPT-0002. |
@@ -49,32 +57,37 @@ Sem framework, bundler, package.json ou pipeline de deploy versionados.
 
 ## Dados e limites
 
-Coleção users/{uid}/caderno; campos legados data, texto, concluido, cor,
-criadoEm, atualizadoEm. grifos é opcional e contém intervalos de texto e cor;
-setDoc com merge preserva campos desconhecidos. Não houve migração remota,
-mudança de configuração Firebase nem exclusão de funcionalidades anteriores.
+Coleção users/{uid}/caderno, gravação por setDoc com merge. Novas operações usam
+data, texto, criadoEm, atualizadoEm, grifos e versaoGrifos: 2. Campos antigos
+cor/concluido são mantidos intactos nos documentos existentes, sem alternar
+conclusão. Um adaptador de leitura conserva grifos antigos. O discriminador
+versaoGrifos distingue remoção explícita de grifo de arrays vazios legados sem
+apagar campos ou migrar a coleção. Apenas notas criadas/editadas recebem v2.
+Removidas por solicitação: ações de conclusão, checkboxes e paleta fixa.
+Autenticação, configuração Firebase e regras remotas permanecem inalteradas.
 
-Regras remotas não são versionadas. Seu suporte ao campo opcional grifos e a
+Regras remotas não são versionadas. Seu suporte a grifos/versaoGrifos e a
 integração autenticada exigem validação com conta real. Não há persistência
 offline de notas explicitamente configurada. Git não restaura dados remotos.
 
 ## Última alteração e checkpoint estável
 
-PROMPT-0003 concluiu o redesign iniciado em PROMPT-0002. CP-0004 preservou a
-implementação parcial recebida; CP-0005 registra a conclusão com ajustes de
-responsividade, foco, proteção de sessão e documentação atualizada.
+PROMPT-0004 recuperou criação acima da lista e caligrafia original, retirou o
+conceito de tarefa e implementou marca-texto livre, mantendo o shell moderno.
 
-- Checkpoint final: **CP-0005**, `fab3e45eb0ac623750cc5191b0b7a4e3ca88cdc4`
-  (2026-09-23, 10:37:58 -03:00; `refs/tags/CP-0005`).
-- Inicial da retomada: CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
+- Checkpoint final: **CP-0007**, commit em `refs/tags/CP-0007`.
+- Inicial: CP-0006, `3ab3b527c06d0d76990d9483c7e295af8a36811f`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.
-- Nível validado: 37 verificações funcionais, 10 de teclado/painéis, nove larguras
+- Nível validado: 57 verificações funcionais, 6 de reload, 11 de teclado/painéis,
+  arraste via CDP com mouse/toque, viewport reduzido 390x360, nove larguras
   (320–1920 px) nos dois temas, movimento reduzido e console sem erros em Chrome
   headless com backend simulado. Capturas desktop/mobile inspecionadas.
-- SDK real: inicialização na tela de login, 13 cores carregadas, console sem erros,
+- Fonte efetivamente renderizada confirmada por CDP: Segoe Print, não customizada.
+- SDK real: inicialização na tela de login e seletor livre, console sem erros,
   em perfil temporário sem autenticação ou escrita remota.
 - Pendente manual: login/CRUD/grifos em conta real, regras, sincronização entre
-  dispositivos, Safari/iOS e leitores de tela. Não é homologação de produção.
+  dispositivos, Safari/iOS, teclado físico mobile e leitores de tela. Dispositivos
+  sem as fontes originais usam cursive do sistema. Não é homologação de produção.
 - Checkpoints locais, sem push/deploy. Commit complementar de hashes pertence
-  ao mesmo PROMPT-0003 e não altera o aplicativo nem move CP-0005.
+  ao mesmo PROMPT-0004 e não altera o aplicativo nem move CP-0007.

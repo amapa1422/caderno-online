@@ -127,7 +127,16 @@ Correção: Painéis abertos transitam apenas transform; visibility fica imediat
 Validação: Foco inicial, Tab/Shift+Tab, Escape, backdrop, calendário por teclado
 e paleta no viewport de 320 px aprovados.
 
-## Limites de validação atuais
+## Limites de validação em CHANGE-0004
+
+57 verificações funcionais, 6 de reload, 11 de teclado/mobile, mouse/toque CDP,
+18 viewports/temas, viewport 390x360, fonte Segoe Print efetiva e console sem erros.
+SDK real inicializado sem conta. Regras de grifos/versaoGrifos e notas sem campos
+antigos não verificadas remotamente. Teclado físico, Safari/iOS e leitor de tela
+pendentes; cursive depende do SO quando faltam Segoe Print e Bradley Hand.
+Não são novos bugs confirmados. Nenhum dado remoto foi alterado.
+
+## Limites de validação em CHANGE-0003 (histórico)
 
 CHANGE-0003 executou scripts reais no Chrome headless com backend simulado:
 37 verificações funcionais, 10 de teclado/painéis, 18 combinações viewport/tema,

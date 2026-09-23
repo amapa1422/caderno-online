@@ -29,7 +29,7 @@
       <symbol id="i-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
       <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
-      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
       <symbol id="i-marker" viewBox="0 0 24 24"><path d="m14 3 7 7-9 9-7-7 9-9Zm-9 9-2 6 3 3 6-2M3 21h6"/></symbol>
       <symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Z"/></symbol>
@@ -90,14 +90,14 @@
       <div class="paper-stage">
         <article id="pagina" class="journal-page" aria-labelledby="tituloData">
           <header class="page-heading"><div class="date-kicker"><span id="dataExtenso"></span><span id="anoData"></span></div><h1 id="tituloData"></h1><p id="subtituloPagina">O que vale guardar deste dia?</p></header>
-          <div class="page-toolbar"><span class="section-label">ANOTAÇÕES<span id="contadorItens">0 itens</span></span><button id="abrirPaleta" class="btn btn-ghost marker-trigger" type="button" aria-expanded="false" aria-controls="paleta" aria-haspopup="dialog"><svg class="icon"><use href="#i-marker"/></svg><span>Marca-texto</span><span id="amostraCor" class="color-preview"></span></button></div>
-          <section id="listaItens" class="notes-list" aria-label="Anotações do dia" aria-busy="true"></section>
           <form id="formAnotacao" class="composer">
-            <span class="composer-plus" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></span>
             <label class="sr-only" for="novoItem">Nova anotação para o dia selecionado</label>
             <textarea id="novoItem" rows="2" maxlength="140" placeholder="Escreva uma ideia, um plano, um lembrete…" aria-describedby="dicaAnotacao"></textarea>
-            <div class="composer-footer"><span id="dicaAnotacao">Enter para adicionar · Shift + Enter para nova linha</span><button id="btnAdicionar" class="btn btn-primary" type="submit" disabled>Adicionar<svg class="icon"><use href="#i-plus"/></svg></button></div>
+            <div class="composer-footer"><button id="abrirPaleta" class="btn btn-ghost marker-trigger" type="button" aria-expanded="false" aria-controls="paleta" aria-haspopup="dialog"><svg class="icon"><use href="#i-marker"/></svg><span>Marca-texto</span><span id="amostraCor" class="color-preview is-none" aria-label="Sem marca-texto"></span></button><button id="btnAdicionar" class="btn btn-primary" type="submit" disabled>Adicionar<svg class="icon"><use href="#i-plus"/></svg></button></div>
+            <p id="dicaAnotacao" class="composer-hint">Enter para adicionar · Shift + Enter para nova linha</p>
           </form>
+          <div class="page-toolbar"><span class="section-label">ANOTAÇÕES</span><span id="contadorItens">0 itens</span></div>
+          <section id="listaItens" class="notes-list" aria-label="Anotações do dia" aria-busy="true"></section>
           <footer class="page-footer"><span class="page-rule"></span><svg class="icon"><use href="#i-book"/></svg><span id="numeroPagina"></span></footer>
         </article>
       </div>
@@ -112,17 +112,23 @@
         <p class="calendar-legend"><span></span>Dia com anotações</p>
         <label class="date-picker-wrap" for="dataSelecionada">Ir para uma data<input class="input" type="date" id="dataSelecionada" min="0001-01-01" max="9999-12-31"></label>
       </section>
-      <section class="day-summary" aria-labelledby="resumoTitulo"><h3 id="resumoTitulo">RESUMO DA PÁGINA</h3><div class="summary-numbers"><div><strong id="totalDia">0</strong><span>anotações</span></div><div><strong id="concluidosDia">0</strong><span>concluídas</span></div></div><div class="progress-track" role="progressbar" id="progressoDia" aria-label="Anotações concluídas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><p id="resumoTexto">Seu dia começa com uma anotação.</p></section>
+      <section class="day-summary" aria-labelledby="resumoTitulo"><h3 id="resumoTitulo">RESUMO DA PÁGINA</h3><div class="summary-numbers"><div><strong id="totalDia">0</strong><span>anotações</span></div></div><p id="resumoTexto">Seu dia começa com uma anotação.</p></section>
       <div class="context-note"><svg class="icon"><use href="#i-marker"/></svg><p>Um pouco de cor para o que importa.<span>Selecione um trecho e abra o marca-texto para destacá-lo.</span></p></div>
     </aside>
     <button id="panelBackdrop" class="panel-backdrop" type="button" aria-label="Fechar painel" hidden></button>
   </main>
 
   <section id="paleta" class="marker-palette" role="dialog" aria-labelledby="tituloPaleta" hidden>
-    <header><div><strong id="tituloPaleta">Marca-texto</strong><span id="corSelecionadaTexto">Rosa</span></div><button id="fecharPaleta" class="icon-button" type="button" aria-label="Fechar paleta"><svg class="icon"><use href="#i-close"/></svg></button></header>
-    <div id="markerColors" class="marker-colors" role="group" aria-label="Cores de marca-texto"></div>
-    <p id="dicaPaleta">Escolha a cor para suas próximas marcações.</p>
-    <button id="removerGrifo" class="btn btn-ghost remove-highlight" type="button" disabled>Remover marca-texto</button>
+    <header><div><strong id="tituloPaleta">Marca-texto</strong><span id="corSelecionadaTexto">Sem marca-texto</span></div><button id="fecharPaleta" class="icon-button" type="button" aria-label="Fechar paleta"><svg class="icon"><use href="#i-close"/></svg></button></header>
+    <div id="campoCor" class="color-field" tabindex="0" role="group" aria-label="Saturação e brilho" aria-describedby="dicaCampoCor"><span id="cursorCor" class="color-cursor"></span></div>
+    <span id="dicaCampoCor" class="sr-only">Arraste para escolher a cor. No teclado, use as setas: esquerda e direita ajustam saturação; cima e baixo ajustam brilho.</span>
+    <label class="picker-label" for="tonalidadeCor">Tonalidade</label><input id="tonalidadeCor" class="hue-slider" type="range" min="0" max="360" value="0">
+    <div class="color-values"><label class="hex-field" for="hexCor">HEX<input id="hexCor" class="input" value="#E85D75" maxlength="7" spellcheck="false" autocomplete="off" aria-describedby="erroCor"></label><label class="native-color-label">Cor<input id="corNativa" type="color" value="#e85d75" aria-label="Abrir seletor de cor do sistema"></label></div>
+    <p id="erroCor" class="color-error" role="status"></p>
+    <div class="highlight-preview"><span class="note-text"><mark id="previewGrifo">Exemplo de marca-texto</mark></span></div>
+    <div class="recent-heading">Cores recentes</div><div id="coresRecentes" class="recent-colors" role="group" aria-label="Cores recentes"></div>
+    <p id="dicaPaleta">Escolha uma cor para a nova anotação.</p>
+    <div class="picker-actions"><button id="removerGrifo" class="btn btn-ghost" type="button">Sem marca-texto</button><button id="aplicarGrifo" class="btn btn-primary" type="button">Usar cor</button></div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <noscript>Ative o JavaScript no navegador para acessar o seu caderno.</noscript>

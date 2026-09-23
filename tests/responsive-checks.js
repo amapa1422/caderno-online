@@ -21,8 +21,11 @@ async function () {
   assert($('agenda').inert && !$('workspace').inert && document.activeElement === $('agendaToggle'), 'mobile: backdrop closes and restores focus');
   $('abrirPaleta').click();
   const bounds = $('paleta').getBoundingClientRect();
-  assert(bounds.left >= 0 && bounds.right <= innerWidth, 'mobile: palette fits viewport');
+  assert(bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= innerHeight, 'mobile: palette fits viewport on both axes');
   key(document.activeElement, 'Escape');
   assert($('paleta').hidden && document.activeElement === $('abrirPaleta'), 'palette: Escape restores focus');
+  $('abrirPaleta').click();
+  document.querySelector('.page-heading').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  assert($('paleta').hidden, 'mobile: outside tap closes picker');
   return { ok: true, tests: results.length, results };
 }

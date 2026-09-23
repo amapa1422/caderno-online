@@ -5,6 +5,33 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0004
+
+Data: 2026-09-23, 12:34:58 -03:00 (checkpoint inicial).
+Resumo: Pedido anexado em Texto colado.txt e cinco imagens de referência.
+Reposicionar criação acima da lista; remover conceito/controles de tarefa e
+conclusão; marca-texto livre com HSV, HEX, preview, recentes e remoção; restaurar
+a fonte manuscrita original apenas nas anotações, mantendo o design system.
+Objetivo: Interface moderna de diário, criação com grifo opcional, edição de
+cores existentes, animação orgânica e mobile/toque/teclado. Preservar notas,
+campos legados, autenticação, calendário, edição e sincronização, sem migração
+destrutiva nem biblioteca pesada. Testar persistência/reload, cores, legados,
+layout, acessibilidade, console e fonte; documentar limitações reais.
+Fonte investigada: CP-0003 e f4b7e9f usam Segoe Print, Bradley Hand, Comic Sans MS,
+cursive. Restaurar as duas primeiras, removendo Comic Sans conforme pedido;
+fontes do sistema, sem redistribuir arquivos proprietários.
+Checkpoint antes: CP-0006, `3ab3b527c06d0d76990d9483c7e295af8a36811f`.
+Checkpoint depois: CP-0007, commit em `refs/tags/CP-0007`.
+CHANGE: CHANGE-0004.
+Arquivos: index.html, style.css, app.js, módulo leve de cores, testes e memória.
+Estado: Concluído e validado localmente. 57 testes funcionais, 6 de reload, 11 de
+teclado/mobile, 18 combinações de viewport/tema, drag mouse/toque, viewport curto,
+fonte original confirmada e console sem erros. Conta real/teclado físico mobile
+pendentes. Árvore recebida limpa; artefatos ignorados; sem push/deploy.
+Trechos: “REMOVER COMPLETAMENTE O CONCEITO DE CHECKBOX / TAREFA CONCLUÍDA”;
+“NÃO escolha imediatamente uma nova fonte parecida”; “Faça as alterações
+diretamente no projeto.” Sem autorização de push/deploy.
+
 ## PROMPT-0003
 
 Data: 2026-09-23, 10:24:28 -03:00 (checkpoint inicial).
