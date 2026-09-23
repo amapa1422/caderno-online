@@ -5,6 +5,21 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0007
+
+Data: 2026-09-23, 16:54:30 -03:00 (checkpoint inicial).
+Resumo: Correção pontual do ✓: concluir aplica a cor global atual na anotação
+inteira pela mesma função de Grifar; desfazer limpa todos os grifos. Preservar
+Grifar/Remover independentes da conclusão, quatro estados possíveis e restante
+do projeto. Uma gravação coerente de concluido+grifos, sem duplicação/Selection,
+com proteção contra cliques rápidos e autosave. Diagnosticar #FF1493; validar
+aceitação #E85D75 + dois reloads, equivalência #22AACC e nova nota #FF4F81,
+cores antigas intactas, edição, IDs iguais/textos iguais, light/dark e console.
+Trecho: “Ao desfazer a conclusão, o grifo é removido.”
+Inicial: CP-0012, `d630baaac666721d03589ca48d4463e4ad4b084f`.
+Final: Pendente. CHANGE-0007. Estado: Em andamento.
+Árvore limpa, apenas artefatos de teste ignorados. Sem rollback, redesign ou push.
+
 ## PROMPT-0006
 
 Data: 2026-09-23, 15:37:30 -03:00 (checkpoint inicial).

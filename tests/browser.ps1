@@ -1,4 +1,4 @@
-param([switch]$Serve, [switch]$Live, [int]$Port = 8876, [string]$BrowserPath, [switch]$KeepOpen)
+param([switch]$Serve, [switch]$Live, [int]$Port = 8876, [string]$BrowserPath, [switch]$KeepOpen, [switch]$DiagnoseToggle)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ($Serve) {
@@ -107,6 +107,11 @@ try {
         $result | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $artifactDir 'functional.json') -Encoding UTF8
         Write-Output ($result | ConvertTo-Json -Depth 10 -Compress)
         if (-not $result.ok) { throw 'Os testes funcionais falharam.' }
+        if ($DiagnoseToggle) {
+            $diagnosis = Invoke-JS '(async()=>{const m=window.__mock,day=document.getElementById("dataSelecionada").value;for(const id of ["diag-mark","diag-toggle"])m.seed(id,{data:day,texto:"Diagnostico",concluido:false,grifos:[],versaoGrifos:2});document.getElementById("abrirPaleta").click();const hex=document.getElementById("hexCor");hex.value="#FF1493";hex.dispatchEvent(new Event("input",{bubbles:true}));document.getElementById("aplicarGrifo").click();const results=[];for(const action of ["mark","toggle"]){document.querySelector("[data-id=diag-"+action+"] [data-action="+action+"]").click();await new Promise(r=>setTimeout(r,100));results.push({action,global:localStorage.getItem("caderno-marker-color"),payload:m.writes.at(-1).value})}return results})()'
+            Write-Output ($diagnosis | ConvertTo-Json -Depth 10 -Compress)
+            return
+        }
         Invoke-CDP 'Page.reload' | Out-Null
         Start-Sleep -Milliseconds 350
         $reloadChecks = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'reload-checks.js'))
