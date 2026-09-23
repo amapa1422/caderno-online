@@ -1,6 +1,6 @@
 # Problemas conhecidos
 
-Levantamento do código recebido em `BASELINE-0001`, sem correções funcionais.
+Levantamento inicial no BASELINE-0001, atualizado por CHANGE-0003 em 2026-09-23.
 Estados: `OPEN`, `INVESTIGATING`, `FIXED`, `WONTFIX`. Ao corrigir, preserve a entrada,
 marque `FIXED` e indique o CHANGE responsável e a validação.
 
@@ -9,7 +9,8 @@ marque `FIXED` e indique o CHANGE responsável e a validação.
 Descrição: O HTML referencia `./icon-192.png` como `apple-touch-icon`, mas esse
 arquivo não existe no repositório. Só existe `icone.png`, usado como favicon.
 
-Status: OPEN.
+Status: FIXED — CHANGE-0002, validado em CHANGE-0003. index.html agora referencia
+icone.png dentro do head; recurso existente e navegador sem erro de carregamento.
 
 Prioridade: Baixa.
 
@@ -29,7 +30,8 @@ resposta da hospedagem real. Nenhum ícone foi adicionado nesta tarefa.
 Descrição: Pressionar Enter repetidamente durante uma inclusão pendente pode
 criar documentos diferentes com o mesmo texto.
 
-Status: OPEN.
+Status: FIXED — CHANGE-0002, validado em CHANGE-0003. addPromise impede inclusões
+concorrentes; teste de Enter repetido com gravação suspensa gera uma única escrita.
 
 Prioridade: Média.
 
@@ -51,7 +53,8 @@ por estar fora do escopo de `PROMPT-0001`.
 Descrição: Um novo rascunho digitado enquanto a inclusão anterior está pendente
 pode ser apagado quando a gravação anterior termina.
 
-Status: OPEN.
+Status: FIXED — CHANGE-0002, validado em CHANGE-0003. Inclusão só limpa o valor
+original e mantém rascunhos por data. Verificado com digitação durante gravação.
 
 Prioridade: Média.
 
@@ -71,7 +74,8 @@ O texto novo desapareceu. Não corrigido nesta tarefa de documentação.
 Descrição: O rascunho do campo de inclusão permanece no DOM após logout e pode
 reaparecer ao autenticar outra conta na mesma página, sem recarregá-la.
 
-Status: OPEN.
+Status: FIXED — CHANGE-0002, validado em CHANGE-0003. Callback de Auth limpa
+campo, edição e Map de rascunhos. Logout/relogin e troca de conta testados.
 
 Prioridade: Média.
 
@@ -87,7 +91,55 @@ Observações: Reproduzido acionando o callback de autenticação com `null` em 
 DOM simulados; o rascunho permaneceu no input oculto. Não implica leitura cruzada
 de documentos remotos; trata-se do texto local não enviado. Não corrigido.
 
-## Limites de validação
+## ISSUE-0005
+
+Descrição: Layout em 768 px apresentava overflow horizontal no workspace,
+reproduzido no teste de navegador da implementação parcial de PROMPT-0002.
+Status: FIXED — CHANGE-0003.
+Prioridade: Alta para responsividade.
+Arquivos: style.css, tests/browser.ps1.
+Causa observada: Tooltip do controle de calendário ultrapassava o limite direito;
+além disso, workspace precisava manter coluna explícita quando painéis flutuam.
+Correção: Alinhamento do tooltip pela direita e grid-column: 2 no workspace.
+Validação: 320, 375, 390, 430, 768, 1024, 1280, 1440 e 1920 px em ambos os temas,
+sem overflow de documento/workspace. Capturas inspecionadas em desktop/mobile.
+
+## ISSUE-0006
+
+Descrição: Edição/navegação aguardando gravação podia continuar após trocar a
+sessão, pois a navegação capturava a sessão somente depois dos awaits.
+Status: FIXED — CHANGE-0003.
+Prioridade: Média.
+Arquivos: app.js, tests/browser-checks.js.
+Correção: Capturar sessão antes de aguardar e verificá-la após awaits de edição
+e navegação. Renderizar o estado atualizado quando navegação não puder prosseguir.
+Validação: Troca de conta com edição pendente; texto da nova conta preservado,
+sem escrita nela nem navegação originada da conta antiga.
+
+## ISSUE-0007
+
+Descrição: Foco inicial do drawer falhava ao abrir, comprometendo contenção de Tab.
+Status: FIXED — CHANGE-0003.
+Prioridade: Média.
+Arquivos: style.css, tests/responsive-checks.js.
+Causa: Transição de visibility impedia foco imediato no painel ao abrir.
+Correção: Painéis abertos transitam apenas transform; visibility fica imediata.
+Validação: Foco inicial, Tab/Shift+Tab, Escape, backdrop, calendário por teclado
+e paleta no viewport de 320 px aprovados.
+
+## Limites de validação atuais
+
+CHANGE-0003 executou scripts reais no Chrome headless com backend simulado:
+37 verificações funcionais, 10 de teclado/painéis, 18 combinações viewport/tema,
+movimento reduzido e zero erros de console. SDK real inicializou na tela de login,
+com 13 cores e zero erros, sem autenticar ou gravar documentos.
+
+Pendente manual: Auth/CRUD/grifos reais, regras permitindo o campo grifos,
+sincronização entre dispositivos, Safari/iOS e leitores de tela. Rascunhos da
+aba não são backup; conflitos de edição remota não têm merge colaborativo.
+As notas abaixo documentam os limites da auditoria inicial, anteriores ao redesign.
+
+## Limites de validação em CHANGE-0001 (histórico)
 
 Os testes simulados exercitaram os fluxos locais do `app.js`, com importações
 substituídas por dependências falsas; não validam SDK, rede, permissões remotas

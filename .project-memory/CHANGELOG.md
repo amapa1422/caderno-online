@@ -3,6 +3,134 @@
 Adicione novas entradas no topo, após esta introdução. Preserve as anteriores;
 não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
+## CHANGE-0003
+
+Data: 2026-09-23.
+Hora: 10:24:28 -03:00 (checkpoint inicial); horário final no registro CP-0005.
+Prompt/Task: PROMPT-0003 — finalizar o pedido de ontem, identificado em PROMPT-0002.
+Checkpoint inicial: CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
+Checkpoint final: CP-0005, commit em `refs/tags/CP-0005`.
+
+### Objetivo
+
+Concluir a implementação parcial do design system, preservando o trabalho recebido,
+validando funcionalidades e responsividade e finalizando memória/checkpoints.
+
+### Arquivos alterados
+
+- app.js e style.css.
+- tests/browser-checks.js, tests/browser.ps1; novos responsive-checks.js e README.md.
+- .project-memory/CURRENT_STATE.md, ARCHITECTURE.md, CHANGELOG.md, PROMPTS.md,
+  DECISIONS.md, KNOWN_ISSUES.md e novos checkpoints/CP-0004.md e CP-0005.md.
+- CP-0004 preservou também os arquivos de CHANGE-0002 já existentes antes da retomada.
+
+### Alterações realizadas
+
+- Revisado o código parcial e confirmada referência estável anterior CP-0002,
+  distinguindo validação documental de homologação real.
+- Corrigido overflow de tooltip no tablet e fixada a coluna do workspace quando
+  sidebar/calendário saem do fluxo. Layout validado até 320 px.
+- Corrigido foco imediato de drawers, evitando transição de visibility ao abrir.
+- Ajustado contraste de botões primários e eyebrow para accent-700 da referência.
+- Protegidos awaits de edição/navegação contra troca de sessão; renderização
+  atualizada quando uma gravação impede navegação.
+- Ampliados testes de autosave pendente, erros, troca de conta e teclado mobile;
+  runner guarda diagnóstico/captura quando detecta overflow.
+- Atualizados estado, arquitetura, decisões, problemas corrigidos e instruções
+  para reproduzir testes. PROMPT-0002 concluído por esta retomada.
+
+### Funcionalidades afetadas
+
+Conclusão do redesign de CHANGE-0002: interface, navegação, editor/rascunhos,
+temas, calendário, marca-textos e acessibilidade. Nenhuma funcionalidade removida.
+firebase.js e icone.png permanecem idênticos ao checkpoint pré-redesign.
+
+### Possíveis impactos
+
+Grifos de trechos usam campo opcional grifos; regras remotas não versionadas
+precisam aceitá-lo. Rascunhos são locais à aba, não persistidos após recarregar.
+Autosave atende edição de notas existentes; novas notas exigem Adicionar/Enter.
+Nenhum dado remoto foi alterado nos testes. Sem push/deploy.
+
+### Testes realizados
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File tests/browser.ps1`:
+  **37 verificações funcionais** (login/erros, migração, snapshot, inclusão,
+  duplicação por Enter, rascunhos, falhas/retry, edição/autosave, grifos, navegação,
+  busca, temas, exclusão, logout e troca de conta).
+- **10 verificações de teclado/painéis**: foco inicial, fundo inert, Tab/Shift+Tab,
+  Escape, backdrop, calendário e paleta no viewport de 320 px.
+- **18 combinações**: larguras 1920, 1440, 1280, 1024, 768, 430, 390, 375, 320 px,
+  nos dois temas; nenhum overflow de documento/workspace. Movimento reduzido
+  aprovado; zero erros no console do navegador com backend simulado.
+- Capturas 375/light e 1440/dark inspecionadas visualmente. Captura 768/light
+  durante diagnóstico confirmou problema de overflow antes da correção.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File tests/browser.ps1 -Live`:
+  título Caderno Online, login visível, 13 cores carregadas, zero erros de console.
+  SDK real inicializado em perfil temporário; nenhuma autenticação/escrita remota.
+- Tentativa inicial restrita não suportou HttpListener; execução fora da restrição
+  permitiu a suíte. Falhas iniciais de overflow/foco foram corrigidas e revalidadas.
+- `git diff --check`, comparação de firebase.js/icone.png com CP-0003 e revisão
+  dos diffs/artefatos/IDs antes de commit. Hash final registrado em metadados.
+- Não realizados: login/CRUD real, regras, testes entre dispositivos, leitor de
+  tela e Safari/iOS. Os mocks não certificam integração remota.
+
+### Resultado
+
+**OK para implementação e validação local.** SDK real inicializa corretamente.
+**Necessita teste manual** para integração autenticada/produção. CP-0005 é estável
+somente nesse nível de validação. Checkpoints e alterações permanecem locais.
+
+## CHANGE-0002
+
+Data: 2026-09-22 (início registrado); trabalho parcial preservado em 2026-09-23.
+Hora: 16:53:42 -03:00 (checkpoint inicial); conclusão por CHANGE-0003.
+Prompt/Task: PROMPT-0002 — aplicar design system oficial.
+Checkpoint inicial: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
+Checkpoint intermediário: CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
+Checkpoint final após retomada: CP-0005, `refs/tags/CP-0005`.
+
+### Objetivo
+
+Aplicar design system preservando autenticação, notas, sincronização e banco.
+
+### Arquivos alterados
+
+index.html, style.css, app.js; novos design_system.html, .gitignore,
+tests/browser.ps1, browser-checks.js, firebase.mock.js; PROMPTS.md e CP-0003.md.
+São arquivos já modificados/novos no início de PROMPT-0003, preservados em CP-0004.
+
+### Alterações realizadas
+
+Implementação recebida: sidebar com busca, editor central, calendário mensal,
+resumo do dia, temas, painéis móveis, animação de folha, feedback de gravação,
+13 cores e grifos de trecho, edição simples com autosave, rascunhos por data,
+proteção contra inclusões duplicadas e limpeza de rascunhos ao trocar sessão.
+Ícone Apple passou a apontar para icone.png existente. Testes locais preparados.
+
+### Funcionalidades afetadas
+
+Interface e edição/navegação ampliadas. Login, migração, inclusão, conclusão,
+exclusão e sincronização preservados. A aparência de espiral/papel pautado foi
+substituída pelo design system solicitado; não houve remoção funcional.
+
+### Possíveis impactos
+
+Novo campo opcional grifos para trechos e preferências locais de tema/painéis.
+Sem mudança de firebase.js, regras remotas ou dados existentes.
+
+### Testes realizados
+
+Não há registro conclusivo de testes executados em 2026-09-22. A retomada
+encontrou apenas artefato de erro do servidor, não prova de validação completa.
+Os testes efetivamente executados e as correções estão em CHANGE-0003.
+
+### Resultado
+
+Implementação parcial preservada em CP-0004 e **concluída por CHANGE-0003**.
+Esta entrada retrospectiva descreve arquivos observados e o pedido registrado;
+não inventa detalhes de conversa, horários ou validações de ontem.
+
 ## CHANGE-0001
 
 Data: 2026-09-22.

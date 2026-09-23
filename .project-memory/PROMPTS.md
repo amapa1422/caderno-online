@@ -5,6 +5,31 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0003
+
+Data: 2026-09-23, 10:24:28 -03:00 (checkpoint inicial).
+
+Resumo do pedido: “Pode finalizar a parte que solicitei ontem do sistema?”
+
+Objetivo: Concluir o redesign identificado em PROMPT-0002, preservando a
+implementação parcial existente, corrigindo problemas encontrados na revisão,
+executando os testes e finalizando a memória e os checkpoints locais.
+
+Arquivos afetados: app.js, style.css, testes e memória; lista em CHANGE-0003.
+
+CHANGE relacionado: CHANGE-0003.
+
+Checkpoint antes: **CP-0004**, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
+
+Checkpoint depois: **CP-0005**, commit em `refs/tags/CP-0005`.
+
+Estado: Concluído localmente; 47 verificações, 18 combinações de viewport/tema,
+movimento reduzido, console e inicialização SDK real aprovados. Login/CRUD real,
+regras e sincronização entre dispositivos ainda exigem teste manual.
+O checkpoint inicial preserva os arquivos modificados/novos de PROMPT-0002,
+sem atribuir sua implementação a esta retomada. Artefatos locais ignorados.
+Nenhum push ou deploy realizado.
+
 ## PROMPT-0002
 
 Data: 2026-09-22, 16:53:42 -03:00 (checkpoint inicial).
@@ -19,11 +44,12 @@ marca-textos e feedback discreto de gravação, com acessibilidade e testes.
 Arquivos afetados: `index.html`, `style.css`, `app.js`, `design_system.html`,
 testes e memória (lista final em CHANGE-0002).
 
-CHANGE relacionado: `CHANGE-0002` (em andamento).
+CHANGE relacionado: `CHANGE-0002`; conclusão em `CHANGE-0003`.
 
 Checkpoint antes: **CP-0003**, `ac98d0649274c25d885b0e6074764ade3e800406`.
 
-Checkpoint depois: Pendente; tarefa em implementação.
+Checkpoint depois: **CP-0005**, `refs/tags/CP-0005`, após a retomada PROMPT-0003.
+Estado intermediário preservado em CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
 
 Trecho fiel: “Faça as alterações diretamente nos arquivos do projeto.” /
 “Não remova funcionalidades existentes.”
@@ -33,7 +59,8 @@ será incorporado ao projeto. Tokens oficiais serão preservados, com adaptaçõ
 de contraste/acessibilidade documentadas. Não copiar conteúdo demonstrativo para
 as notas dos usuários. Não há PWA nem autosave de rascunho no código recebido.
 
-Estado: Em andamento.
+Estado: Concluído pela retomada PROMPT-0003 em 2026-09-23. Os testes válidos e
+limitações estão em CHANGE-0003; não se presume validação realizada ontem.
 
 ## PROMPT-0001
 

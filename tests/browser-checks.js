@@ -62,6 +62,24 @@ async function () {
     assert($('editarItem') && document.activeElement === $('editarItem'), 'editor: snapshot does not steal focus');
     assert(mock.documents.get('users/test-user/caderno/first').extraField === 'keep', 'save: merge preserves unknown fields');
     row.querySelector('[data-action="finish-edit"]').click(); await until(() => !$('editarItem'), 'editor closed');
+    row.querySelector('[data-action="edit"]').click(); await until(() => $('editarItem'), 'reopen editor');
+    mock.hold = true;
+    input('editarItem', 'Primeira revisão pendente');
+    await until(() => $('statusSalvamento').textContent === 'Salvando…', 'pending edit');
+    input('editarItem', 'Revisão mais recente preservada');
+    $('proximoDia').click(); await wait(100);
+    assert($('dataSelecionada').value === today, 'editor: navigation waits for autosave');
+    mock.release();
+    await until(() => !$('pagina').inert && $('dataSelecionada').value !== today, 'latest edit then navigation');
+    assert(mock.documents.get('users/test-user/caderno/first').texto === 'Revisão mais recente preservada', 'editor: typing during pending autosave is persisted before navigation');
+    await go(today);
+    row = document.querySelector('[data-id="first"]');
+    row.querySelector('[data-action="edit"]').click(); await until(() => $('editarItem'), 'edit before failure');
+    mock.failNext = true; input('editarItem', 'Planejar a semana com mais calma');
+    $('proximoDia').click();
+    await until(() => $('statusSalvamento').dataset.state === 'error', 'failed navigation save');
+    assert($('dataSelecionada').value === today && $('editarItem').value === 'Planejar a semana com mais calma', 'editor: failed save keeps date and unsaved text');
+    row.querySelector('[data-action="finish-edit"]').click(); await until(() => !$('editarItem'), 'retry editing');
     row.querySelector('[data-action="toggle"]').click(); await until(() => row.classList.contains('done'), 'completion');
     assert(row.classList.contains('is-marking'), 'highlight: completion triggers stroke');
     await wait(450); mock.emit();
@@ -114,6 +132,18 @@ async function () {
     await until(() => !$('aplicativo').hidden && $('statusSalvamento').textContent === 'Salvo', 'relogin');
     assert(mock.subscriptions === 1 && $('novoItem').value === '', 'relogin: no stale draft or duplicate listeners');
     assert(mock.writes.every(write => write.path.startsWith('users/test-user/caderno/') && write.options.merge === true), 'Firestore: original collection and merge contract');
+    row = document.querySelector('[data-id="first"]');
+    row.querySelector('[data-action="edit"]').click(); await until(() => $('editarItem'), 'edit before account change');
+    mock.hold = true; input('editarItem', 'Edição da primeira conta');
+    await until(() => $('statusSalvamento').textContent === 'Salvando…', 'held edit before account change');
+    $('proximoDia').click();
+    await mock.changeUser({ uid: 'other-user', email: 'other@example.com' });
+    mock.seed('first', { data: today, texto: 'Texto da segunda conta', cor: '#f3a7d8', criadoEm: 1 }, 'other-user');
+    mock.release(); await wait(550);
+    assert($('dataSelecionada').value === today && !mock.writes.some(write => write.path.startsWith('users/other-user/')), 'session: old save cannot navigate or write to new account');
+    assert(document.querySelector('.note-text').textContent === 'Texto da segunda conta', 'session: new account keeps its own text');
+    await mock.changeUser({ uid: 'test-user', email: 'teste@example.com', displayName: 'Caderno de teste' });
+    await until(() => $('statusSalvamento').textContent === 'Salvo', 'restore test account');
     return { ok: true, tests: results.length, results };
   } catch (error) { return { ok: false, tests: results.length, results, error: error.message, stack: error.stack }; }
 }

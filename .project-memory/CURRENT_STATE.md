@@ -1,116 +1,79 @@
-# Estado atual
+﻿# Estado atual
 
-Atualizado em: 2026-09-22 — `PROMPT-0001` / `CHANGE-0001`.
-Este arquivo descreve somente o presente. Consulte `CHANGELOG.md` para histórico.
+Atualizado em: 2026-09-23 — PROMPT-0003 / CHANGE-0003.
+Este arquivo descreve somente o presente. Histórico em CHANGELOG.md.
 
-## Projeto
+## Projeto e funcionalidades
 
-**Meu Caderno / Caderno Online** é um aplicativo web estático, em português,
-para listar assuntos/anotações de cada dia. Cada conta acessa seus itens no
-Firestore, com atualização por listener em tempo real.
+**Caderno Online** é um aplicativo web estático para anotações diárias por conta,
+com Firebase Auth e sincronização Firestore em tempo real.
 
-## Funcionalidades atuais
+- Login por e-mail/senha, tratamento de erros, sessão persistente e logout.
+- Interface baseada em design_system.html: sidebar com busca nas páginas,
+  editor central, calendário mensal e resumo do dia.
+- Temas claro/escuro, seguindo a preferência do sistema até escolha explícita;
+  tema e recolhimento dos painéis salvos no navegador.
+- Navegação por data, calendário, Hoje e dia anterior/seguinte com virada de folha.
+- Painéis móveis com fundo inerte, Escape, contenção e devolução de foco.
+- Inclusão explícita de anotações de até 140 caracteres por Adicionar/Enter;
+  Shift+Enter insere nova linha. Novas notas não têm autosave.
+- Edição de notas existentes com autosave após 650 ms, salvamento serializado
+  e preservação de texto em falhas. Navegação aguarda inclusão/edição pendente.
+- Conclusão/desmarcação, exclusão imediata e 13 cores de marca-texto.
+- Grifo de nota inteira e de trechos selecionados, recoloração e remoção.
+- Feedback de gravação, carregamento, erro/conexão e movimento reduzido.
+- Rascunhos separados por dia em memória da aba, limpos ao mudar de sessão;
+  aviso de saída com texto pendente. Não persistem após fechar/recarregar a aba.
+- Migração legada do localStorage e documentos existentes preservados.
 
-- Login por e-mail e senha com mensagens para credenciais inválidas, excesso de
-  tentativas e falha de rede; logout; persistência local da sessão via Firebase Auth.
-- Seleção de dia por campo nativo de data, inicialmente o dia local atual;
-  apresentação da data em português e contador de itens do dia.
-- Inclusão de texto pelo botão Adicionar ou Enter, com campo de até 140 caracteres.
-- Concluir e desmarcar itens. A conclusão aplica a cor selecionada do marca-texto.
-- Seis cores: rosa, amarelo, verde, azul, lilás e laranja.
-- Exclusão imediata de itens e mensagens transitórias de sucesso/erro.
-- Sincronização da coleção do usuário, agrupada por dia e ordenada por criação.
-- Migração de notas legadas do localStorage para a conta autenticada.
-- Layout de caderno com adaptação para telas de até 720 px, tela de login e favicon.
-- Infraestrutura de memória, histórico e checkpoints Git para os agentes.
+Não há editor rico, anexos, eventos com horário, PWA, manifest, service worker,
+cadastro ou recuperação de senha. O calendário resume notas reais; conteúdo
+demonstrativo do design system não é importado para as contas.
 
-Não existem edição posterior do texto, editor rico, autosave durante digitação,
-cadastro/recuperação de senha, calendário mensal próprio ou dark mode.
-PWA, manifest e service worker não estão implementados. `design_system.html`
-não existe nesta versão; deve ser consultado se for adicionado futuramente.
+## Stack e arquivos
 
-## Stack
-
-- HTML5, CSS e JavaScript nativo, com módulos ES no navegador.
-- Firebase JavaScript SDK **12.18.0**, importado de `www.gstatic.com` por URL.
-- Firebase Authentication: e-mail/senha, `browserLocalPersistence`.
-- Cloud Firestore: documentos de itens e `onSnapshot`.
-- APIs do navegador: DOM, localStorage legado, datas, `crypto.randomUUID` com fallback.
-- Git para histórico e restauração; Markdown para memória.
-
-Não há framework, bundler, `package.json`, dependências npm, suíte de testes,
-pipeline de CI ou configuração de deploy versionados.
-
-## Arquivos principais
+HTML, CSS e JavaScript nativo com módulos ES. Firebase SDK 12.18.0 via gstatic,
+Firebase Auth com browserLocalPersistence e Cloud Firestore com onSnapshot.
+Sem framework, bundler, package.json ou pipeline de deploy versionados.
 
 | Arquivo | Responsabilidade |
 | --- | --- |
-| `index.html` | Layout, login, cabeçalho, seletor de data, entrada de texto, cores e lista; carrega CSS e módulo JS. |
-| `style.css` | Tema claro de papel, espiral, linhas, marca-texto, login, toasts e responsividade. |
-| `app.js` | Estado, eventos, login/logout, datas/navegação diária, inclusão, conclusão, exclusão, migração e renderização. |
-| `firebase.js` | Configuração cliente, inicialização do Firebase, Auth/Firestore, persistência da sessão e exports do SDK. |
-| `icone.png` | Favicon referenciado pelo HTML. |
-| `AGENTS.md` | Protocolo permanente de desenvolvimento e manutenção da memória. |
-| `.project-memory/` | Estado, arquitetura, histórico, decisões, problemas, pedidos e checkpoints. |
+| index.html | Login, shell, painéis, compositor, paleta, SVGs e tema inicial. |
+| style.css | Tokens da referência, componentes, temas e responsividade. |
+| app.js | Auth, migração, gravação, edição, grifos, calendário e interação. |
+| firebase.js | Configuração e exports Firebase, preservados do baseline. |
+| icone.png | Favicon e apple-touch-icon existente. |
+| design_system.html | Referência visual standalone incorporada em PROMPT-0002. |
+| tests/ | Testes de navegador via PowerShell/CDP e Firebase simulado. |
+| .project-memory/ | Histórico, decisões, problemas e checkpoints. |
 
-Editor: somente `#novoItem` em `index.html` e `adicionarItem()` em `app.js`.
-Calendário/navegação: `#dataSelecionada`, funções de data e filtro por
-`state.data` em `app.js`; não há roteador ou navegação entre páginas.
-Manifest/service worker: nenhum arquivo, link de manifest ou registro encontrado.
-Referência visual `design_system.html`: ausente.
-O HTML aponta `apple-touch-icon` para `icon-192.png`, que não está no repositório
-(`ISSUE-0001`). Não confundir esse link com suporte PWA completo.
+## Dados e limites
 
-## Fluxos críticos
+Coleção users/{uid}/caderno; campos legados data, texto, concluido, cor,
+criadoEm, atualizadoEm. grifos é opcional e contém intervalos de texto e cor;
+setDoc com merge preserva campos desconhecidos. Não houve migração remota,
+mudança de configuração Firebase nem exclusão de funcionalidades anteriores.
 
-```text
-Login → Firebase Auth → onAuthStateChanged
-      → exibir caderno → migrar localStorage legado
-      → onSnapshot(users/{uid}/caderno)
-      → agrupar por data / ordenar criadoEm → renderizar
+Regras remotas não são versionadas. Seu suporte ao campo opcional grifos e a
+integração autenticada exigem validação com conta real. Não há persistência
+offline de notas explicitamente configurada. Git não restaura dados remotos.
 
-Adicionar / concluir / desmarcar → setDoc(merge: true)
-Excluir → deleteDoc
-Atualização do listener → state.registros → lista do dia
+## Última alteração e checkpoint estável
 
-Selecionar dia → state.data → renderizar itens já carregados
-Sair → signOut → cancelar listener → limpar registros → tela de login
-```
+PROMPT-0003 concluiu o redesign iniciado em PROMPT-0002. CP-0004 preservou a
+implementação parcial recebida; CP-0005 registra a conclusão com ajustes de
+responsividade, foco, proteção de sessão e documentação atualizada.
 
-A gravação ocorre nas ações explícitas, sem autosave do rascunho. O Firestore é
-a fonte dos registros atuais; localStorage atende à migração antiga. Não há cache
-persistente offline do Firestore configurado explicitamente no código.
-As regras/permissões do serviço remoto não estão versionadas e não foram verificadas.
-
-## Estado visual atual
-
-Conforme HTML/CSS: tema claro em bege, papel pautado com margem avermelhada,
-espiral escura à esquerda, cabeçalhos em fonte de sistema e notas com fonte
-manuscrita disponível no dispositivo. Cores pastéis para marca-texto, botões
-escuros e cartão de login centralizado. Desktop limitado a 1100 px; até 720 px,
-layout ocupa a largura e reorganiza cabeçalho/compositor. Não houve redesign
-nem homologação visual em navegador nesta tarefa.
-
-## Última alteração realizada
-
-`PROMPT-0001` / `CHANGE-0001`: instalação desta infraestrutura e documentação do
-código recebido. Checkpoint inicial: `CP-0001`; checkpoint final: `CP-0002`.
-Nenhum dos cinco arquivos do aplicativo foi alterado.
-
-## Último checkpoint estável
-
-- Checkpoint final da infraestrutura: **CP-0002**.
-- Commit: **6d10c7b0b299e2802e9cca026ee427fe6b2d436c**
-  (2026-09-22, 16:38:31 -03:00; `refs/tags/CP-0002`).
-- Nível de validação: documentação revisada, referências Git e restauração do
-  baseline verificadas; aplicativo preservado. Integração Firebase e comportamento
-  completo no navegador ainda exigem teste manual.
-- Baseline do aplicativo: **BASELINE-0001 / CP-0001**,
-  commit **2eb960f0b473a216e82e4d242dff044ecac0e481**.
-- Branch de instalação: `main`. Checkpoints locais; nenhum push/deploy nesta tarefa.
-- O commit complementar apenas de hashes/metadados sucede `CP-0002`;
-  ele pertence à mesma tarefa e não muda o aplicativo.
-
-Consulte `KNOWN_ISSUES.md` para os problemas preexistentes. “Estável” aqui indica
-uma referência preservada e restaurável com esse nível de validação, não ausência
-de defeitos conhecidos.
+- Checkpoint final: **CP-0005**, commit em `refs/tags/CP-0005`.
+- Inicial da retomada: CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
+- Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
+- Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.
+- Nível validado: 37 verificações funcionais, 10 de teclado/painéis, nove larguras
+  (320–1920 px) nos dois temas, movimento reduzido e console sem erros em Chrome
+  headless com backend simulado. Capturas desktop/mobile inspecionadas.
+- SDK real: inicialização na tela de login, 13 cores carregadas, console sem erros,
+  em perfil temporário sem autenticação ou escrita remota.
+- Pendente manual: login/CRUD/grifos em conta real, regras, sincronização entre
+  dispositivos, Safari/iOS e leitores de tela. Não é homologação de produção.
+- Checkpoints locais, sem push/deploy. Commit complementar de hashes pertence
+  ao mesmo PROMPT-0003 e não altera o aplicativo nem move CP-0005.

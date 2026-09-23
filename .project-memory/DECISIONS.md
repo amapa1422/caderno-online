@@ -5,6 +5,43 @@ o status da antiga para `Substituída por DEC-XXXX`, sem apagar seu contexto.
 As razões originais das escolhas de código anteriores à memória não são conhecidas;
 observações do baseline estão identificadas como tal.
 
+## DEC-0006
+
+Título: Design system aplicado ao diário, preservando notas e contratos legados.
+Status: Ativa.
+Data: 2026-09-23 (registro da implementação iniciada em 2026-09-22).
+Origem: PROMPT-0002, concluído em PROMPT-0003 / CHANGE-0003.
+
+Motivo: Aplicar a referência visual oficial sem remover funcionalidades ou
+introduzir conteúdo demonstrativo nas contas. Tokens de fontes, espaçamento,
+temas, layout e cores vêm de design_system.html. Contraste foi adaptado no
+produto: text-muted claro #6b7280, botões/eyebrow com accent-700 e erro escuro
+#f28c8c. A referência permanece preservada como fornecida.
+
+Impacto: Sidebar, calendário, temas e edição de texto simples com autosave de
+notas existentes. Inclusão continua explícita e rascunhos são apenas da aba.
+Grifo de trechos usa campo opcional grifos, mantendo campos/caminho legados,
+setDoc com merge, configurações Firebase e migração existente. Sem PWA ou agenda
+com eventos inventados. Regras remotas devem aceitar grifos; pendente teste real.
+
+Arquivos: index.html, style.css, app.js, design_system.html, ARCHITECTURE.md.
+DEC-0002 permanece como decisão histórica restrita à instalação PROMPT-0001;
+não proíbe o redesign autorizado posteriormente.
+
+## DEC-0007
+
+Título: Validar o redesign localmente com navegador real e backend simulado.
+Status: Ativa.
+Data: 2026-09-23.
+Origem: PROMPT-0002 / PROMPT-0003.
+
+Motivo: Exercitar DOM, layout e operações assíncronas sem alterar dados remotos.
+Impacto: Runner PowerShell/CDP com Chrome/Edge, perfil temporário e substituição
+de firebase.js somente pelo servidor de teste. Modo Live verifica inicialização
+sem autenticar. Artefatos são ignorados; scripts versionados. Resultado local
+não equivale a homologação de regras, contas, dados ou dispositivos reais.
+Arquivos: tests/, .gitignore, KNOWN_ISSUES.md.
+
 ## DEC-0001
 
 Título: Memória obrigatória e Git como mecanismo oficial de rollback.

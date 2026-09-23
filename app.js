@@ -263,7 +263,12 @@ async function iniciarEdicao(item) {
 async function finalizarEdicao(close) {
   clearTimeout(editTimer);
   const editing = state.editing; if (!editing) return true;
-  if (editing.inFlight) { const ok = await editing.inFlight; if (!ok) return false; return finalizarEdicao(close); }
+  if (editing.session !== state.session) return false;
+  if (editing.inFlight) {
+    const ok = await editing.inFlight;
+    if (!ok || editing.session !== state.session) return false;
+    return finalizarEdicao(close);
+  }
   const text = editing.value.trim();
   if (!text) { if (close) mostrarToast("Escreva algo antes de concluir a edição.", "erro"); return false; }
   if (text !== editing.savedText) {
@@ -292,11 +297,14 @@ async function finalizarEdicao(close) {
 async function navegarPara(day) {
   if (!dataValida(day) || state.turning) return false;
   if (day === state.data) { fecharPainel(); return true; }
+  const session = state.session;
   // Reserve the transition before awaiting writes, so repeated clicks cannot race.
   state.turning = true;
-  if (!await finalizarEdicao(true)) { state.turning = false; return false; }
-  if (state.addPromise && !await state.addPromise) { state.turning = false; return false; }
-  const session = state.session, forward = day > state.data, page = $("pagina");
+  const editSaved = await finalizarEdicao(true);
+  if (!editSaved || session !== state.session) { state.turning = false; renderizar(); return false; }
+  const addSaved = state.addPromise ? await state.addPromise : true;
+  if (!addSaved || session !== state.session) { state.turning = false; renderizar(); return false; }
+  const forward = day > state.data, page = $("pagina");
   state.drafts.set(state.data, $("novoItem").value);
   fecharPaleta(false); fecharPainel(false); state.selectedRange = null;
   page.inert = true; page.classList.add("turning"); page.classList.toggle("turning-back", !forward);

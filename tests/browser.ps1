@@ -107,22 +107,30 @@ try {
         Write-Output ($result | ConvertTo-Json -Depth 10 -Compress)
         if (-not $result.ok) { throw 'Os testes funcionais falharam.' }
         $viewports = @()
-        foreach ($width in @(1920,1440,1280,1024,768,430,390,375)) {
+        foreach ($width in @(1920,1440,1280,1024,768,430,390,375,320)) {
             foreach ($theme in @('light','dark')) {
                 Invoke-CDP 'Emulation.setDeviceMetricsOverride' @{ width=$width; height=1000; deviceScaleFactor=1; mobile=$false } | Out-Null
                 Invoke-JS ('document.documentElement.dataset.theme="' + $theme + '"; new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))') | Out-Null
                 $layout = Invoke-JS '(()=>{const w=document.getElementById("workspace"),p=document.getElementById("pagina");return {width:innerWidth,theme:document.documentElement.dataset.theme,overflow:document.documentElement.scrollWidth>innerWidth,workspaceOverflow:w.scrollWidth>w.clientWidth,pageWidth:p.getBoundingClientRect().width,heading:document.getElementById("tituloData").getBoundingClientRect().width}})()'
                 $viewports += $layout
-                if ($layout.overflow -or $layout.workspaceOverflow) { throw "Overflow em $width / $theme" }
                 $shot = Invoke-CDP 'Page.captureScreenshot' @{ format='png'; captureBeyondViewport=$false }
                 [IO.File]::WriteAllBytes((Join-Path $artifactDir "$width-$theme.png"), [Convert]::FromBase64String($shot.data))
+                if ($layout.overflow -or $layout.workspaceOverflow) {
+                    Write-Output ($layout | ConvertTo-Json -Compress)
+                    Write-Output (Invoke-JS 'JSON.stringify({client:document.getElementById("workspace").clientWidth,scroll:document.getElementById("workspace").scrollWidth,items:[...document.querySelectorAll("#workspace *")].filter(e=>{const r=e.getBoundingClientRect();return r.width && (r.right>innerWidth+1 || r.left < -1)}).map(e=>({tag:e.tagName,id:e.id,cls:e.className,width:e.getBoundingClientRect().width,left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right}))})')
+                    throw "Overflow em $width / $theme"
+                }
             }
         }
         $viewports | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $artifactDir 'viewports.json') -Encoding UTF8
+        $mobileChecks = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'responsive-checks.js'))
+        $mobileResult = Invoke-JS ('(' + $mobileChecks + ')()')
+        $mobileResult | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $artifactDir 'mobile.json') -Encoding UTF8
+        Write-Output ($mobileResult | ConvertTo-Json -Depth 10 -Compress)
         Invoke-CDP 'Emulation.setEmulatedMedia' @{ features=@(@{name='prefers-reduced-motion';value='reduce'}) } | Out-Null
         $reduced = Invoke-JS '(async()=>{const before=document.getElementById("dataSelecionada").value;document.getElementById("proximoDia").click();await new Promise(r=>setTimeout(r,200));return {changed:document.getElementById("dataSelecionada").value!==before,animations:document.getElementById("pagina").getAnimations().length}})()'
         if (-not $reduced.changed -or $reduced.animations -ne 0) { throw 'Falha em reduced-motion.' }
-        Write-Output 'RESPONSIVE=PASS (8 widths x 2 themes); REDUCED_MOTION=PASS'
+        Write-Output 'RESPONSIVE=PASS (9 widths x 2 themes); REDUCED_MOTION=PASS'
     }
     $errors = @($script:events | Where-Object { $_.method -eq 'Runtime.exceptionThrown' -or ($_.method -eq 'Log.entryAdded' -and $_.params.entry.level -eq 'error') })
     $errors | ConvertTo-Json -Depth 15 | Set-Content -LiteralPath (Join-Path $artifactDir 'console-errors.json') -Encoding UTF8

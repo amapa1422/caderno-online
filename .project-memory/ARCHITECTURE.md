@@ -1,194 +1,106 @@
-# Arquitetura real do Caderno Online
+﻿# Arquitetura do Caderno Online
 
-Fonte: leitura integral dos cinco arquivos do aplicativo no `BASELINE-0001`,
-commit `2eb960f0b473a216e82e4d242dff044ecac0e481`, em 2026-09-22.
-Nenhuma arquitetura futura está apresentada como implementada.
+Atualizada por PROMPT-0003 / CHANGE-0003 em 2026-09-23, concluindo PROMPT-0002.
 
-## Estrutura
+## Estrutura e interface
 
-```text
-caderno-online/
-├── index.html                  estrutura da página
-├── style.css                   aparência e responsividade
-├── app.js                      estado, eventos e comportamento
-├── firebase.js                 conexão e exports Firebase
-├── icone.png                   favicon
-├── AGENTS.md                   instruções dos agentes
-└── .project-memory/
-    ├── README.md
-    ├── CURRENT_STATE.md
-    ├── CHANGELOG.md
-    ├── DECISIONS.md
-    ├── PROMPTS.md
-    ├── ARCHITECTURE.md
-    ├── KNOWN_ISSUES.md
-    ├── ROLLBACK.md
-    └── checkpoints/
-        ├── CP-0001.md
-        └── CP-0002.md
-```
+Aplicativo estático HTTP(S): index.html carrega style.css e app.js; app.js importa
+firebase.js, que importa SDK 12.18.0 de gstatic. Sem framework, build, backend
+próprio, roteador, manifest ou service worker.
 
-Não existem `design_system.html`, manifest, service worker, regras do Firestore,
-configuração Firebase CLI, servidor próprio ou gerenciador de pacotes versionados.
-`design_system.html`, se adicionado, será a referência a consultar antes de
-alterações visuais. Hoje a referência efetiva é o conjunto HTML/CSS existente.
+Design_system.html é referência standalone. O produto incorpora seus tokens em
+style.css e usa componentes próprios, sem executar seu JS nem copiar seus dados.
+Ícones são SVGs no HTML; icone.png atende favicon e ícone Apple.
 
-## Relação entre módulos
-
-```text
-index.html ── link stylesheet ──> style.css
-     │
-     └── script type=module ──> app.js ── import ──> firebase.js
-                                    │                    │
-                                    │                    └── SDK 12.18.0 via gstatic
-                                    └── manipula DOM          ├── Auth
-                                                             └── Firestore
-```
-
-`index.html` fornece os elementos por ID. `app.js` consulta esses elementos,
-instala eventos e executa `renderizar()` na inicialização. Não há framework,
-compilação, componentes em diretórios separados ou roteamento por URL.
-
-O site deve ser servido por HTTP(S), com suporte a módulos ES no navegador e
-acesso aos endpoints externos do Firebase. Este repositório não define seu
-servidor de hospedagem nem um comando de desenvolvimento instalado.
+Shell: sidebar, workspace e calendário. Sidebar flutuante até 900 px; calendário
+flutuante até 1180 px. Workspace ocupa explicitamente a segunda coluna da grade.
+Busca filtra datas/textos já sincronizados. Calendário mostra 42 dias com notas
+sinalizadas e navegação por setas do teclado. Resumo conta notas/conclusões;
+não há agenda com horários nem conteúdo fictício em produção.
 
 ## Estado e renderização
 
-`state` em `app.js` contém `usuario`, `data`, `cor`, `corNome`, `registros`
-(mapa data → itens) e `unsubscribe` (cancelamento do listener).
-A data começa no dia local e a cor começa em rosa. Esses dois valores não são
-salvos como preferências. A autenticação persistente é responsabilidade do SDK.
+state centraliza usuário, sessão, data, cor, registros, listener, gravação,
+edição, rascunhos, grifos e painéis. O contador de sessão protege contra retornos
+assíncronos de outra conta. renderizarItens reconcilia linhas por ID/assinatura,
+preservando textarea e foco durante snapshots. Textos são escapados antes de
+virar HTML, cores limitadas a hexadecimal de seis dígitos e ranges normalizados.
 
-`renderizar()` atualiza o seletor de data, data por extenso, título, contador e
-lista. Usa `innerHTML` para reconstruir as linhas; `escaparHTML()` trata o texto
-das notas. A delegação de eventos na lista identifica `data-id` e `data-action`.
-O estado vazio é exibido quando não há itens do dia.
+## Autenticação e sincronização
 
-## Firebase e autenticação
+Firebase permanece configurado em firebase.js, projeto caderno-online-e5b1f.
+Auth usa e-mail/senha e browserLocalPersistence. Não há cadastro/reset de senha.
 
-`firebase.js` importa os módulos `firebase-app.js`, `firebase-auth.js` e
-`firebase-firestore.js` da versão **12.18.0** em `www.gstatic.com`.
-O projeto configurado é `caderno-online-e5b1f`. A configuração cliente já existia
-no baseline e não foi modificada por esta instalação.
+onAuthStateChanged incrementa sessão, cancela listener, limpa dados/rascunhos/
+edição e campos locais e alterna login/caderno. Com usuário, executa migração
+legada e instala onSnapshot(users/{uid}/caderno). Snapshots validam datas,
+agrupam por dia e ordenam por criadoEm. Metadata distingue cache/conexão.
+Toda a coleção é lida, sem paginação nem consulta limitada ao dia.
 
-Inicialização: `getApps()` / `getApp()` / `initializeApp()`, seguida de
-`getAuth()` e `getFirestore()`. `setPersistence(auth, browserLocalPersistence)`
-solicita persistência local e registra erro no console caso falhe.
+Logout aguarda edição e inclusão em andamento; recusa saída enquanto outras
+gravações continuam pendentes. Sessão é verificada após awaits de edição/
+navegação para não executar ações antigas em uma nova conta.
 
-O formulário usa `signInWithEmailAndPassword`. Não há criação de contas,
-redefinição de senha, provedores sociais ou funções administrativas no aplicativo.
+## Dados e gravação
 
-```text
-Autenticação confirmada
-  → state.usuario = usuario
-  → ocultar login / mostrar aplicativo
-  → aguardar migrarLocalStorageParaFirebase()
-  → iniciarSincronizacao()
+Documento: users/{uid}/caderno/{id}. UUID com fallback tempo/aleatoriedade.
 
-Ausência de usuário / logout
-  → pararSincronizacao()
-  → limpar usuário e registros em memória
-  → mostrar login / ocultar aplicativo
-  → renderizar()
-```
-
-O caminho por UID separa os documentos usados pelo cliente, mas autorização real
-depende de regras do Firestore. Essas regras e configurações remotas de Auth
-não estão no Git; não é possível atestar sua configuração a partir deste código.
-
-## Banco e modelo de dados
-
-Coleção: `users/{uid}/caderno`. Documento: `users/{uid}/caderno/{id}`.
-
-| Campo | Valor gravado pelo cliente |
+| Campo | Tipo/finalidade |
 | --- | --- |
-| `data` | String no formato `YYYY-MM-DD`. |
-| `texto` | Texto do item. |
-| `concluido` | Booleano. |
-| `cor` | Cor hexadecimal do marca-texto. |
-| `criadoEm` | Número em milissegundos, normalmente `Date.now()`. |
-| `atualizadoEm` | Número em milissegundos, `Date.now()` no salvamento. |
+| data | YYYY-MM-DD do dia original da operação. |
+| texto | Texto simples; entrada/edição limitada a 140 caracteres na interface. |
+| concluido | Booleano; ativa também grifo da nota inteira. |
+| cor | Hexadecimal; cores legadas continuam aceitas. |
+| criadoEm / atualizadoEm | Milissegundos do relógio cliente. |
+| grifos | Opcional: array de { inicio, fim, cor }, índices UTF-16, fim exclusivo. |
 
-O ID é gerado por `crypto.randomUUID()` ou fallback de tempo/aleatoriedade e usado
-como ID do documento. O cliente reconstrói `id` a partir do snapshot. As datas de
-criação/atualização vêm do relógio cliente; não são timestamps de servidor.
+salvarItem mantém setDoc com merge, campos legados e caminho original. O campo
+grifos é opcional; remover marcações pode gravar array vazio. Documentos antigos
+sem o campo continuam válidos. Exclusão usa deleteDoc, imediata e sem lixeira.
+Não houve mudança de regras/configuração ou migração remota. Regras reais devem
+aceitar o campo opcional; isso exige conta real para validação.
 
-`salvarItem()` usa `setDoc(..., { merge: true })`. `excluirItem()` usa `deleteDoc`.
-Não há exclusão lógica, histórico de versões de notas, transação ou confirmação
-prévia de exclusão na interface.
+- Inclusão explícita protegida por addPromise contra repetição. Captura data/ID
+  antes do await; resposta não limpa um texto novo digitado durante a gravação.
+- Rascunhos por data em Map local à aba, sem persistência; limpos no callback de
+  Auth. beforeunload sinaliza conteúdo/gravação pendente.
+- Edição existente tem debounce de 650 ms e uma operação por vez. Texto novo
+  digitado durante gravação é salvo em seguida. Falhas preservam a edição.
+- Navegação aguarda inclusão/edição; erro mantém dia/texto. Usa Web Animations,
+  com fade breve sem rotação em prefers-reduced-motion.
+- Grifos de trecho são divididos/substituídos ao recolorir/remover. Edição ajusta
+  intervalos comparando prefixo/sufixo; concluir usa a cor selecionada.
+- Status informa gravação, edição, cache/conexão e falhas; toasts explicam erros.
 
-`iniciarSincronizacao()` lê **toda** a coleção do usuário com `onSnapshot`, ignora
-documentos sem `data`, agrupa por dia e ordena por `criadoEm`. Não há paginação ou
-consulta remota limitada ao dia. Antes de instalar listener e no logout, o
-listener anterior é cancelado por `pararSincronizacao()`.
+Não há resolução colaborativa de conflitos entre dispositivos: merge de campos
+não equivale a merge de versões concorrentes do texto. Não há histórico remoto.
 
-## Gravação, armazenamento e migração
+## Armazenamento e preferências
 
-```text
-Usuário → Adicionar / Finalizar / Desmarcar → salvarItem → setDoc
-Usuário → Excluir → excluirItem → deleteDoc
-Firestore → onSnapshot → state.registros → renderizar → interface
-```
+Migração preservada: meu-caderno-diario-v1 contém mapa data→itens e
+meu-caderno-diario-migrado-firebase-v1 é marcador global. Dados antigos não são
+apagados; usa IDs antigos, merge e Promise.all. Marcador não separado por UID,
+comportamento herdado. Firebase Storage não é utilizado.
 
-Não há autosave por digitação, debounce ou salvamento de rascunho. As ações
-gravam diretamente; a renderização dos registros é alimentada pelo listener.
-Mensagens de erro são enviadas ao console e/ou ao toast conforme o fluxo.
+Preferências: caderno-theme, caderno-sidebar, caderno-agenda. Tema segue o sistema
+até escolha explícita e é aplicado antes do CSS. Auth persistente não significa
+notas offline; não há cache persistente Firestore configurado explicitamente.
 
-O localStorage participa apenas da migração legada:
+## Acessibilidade e testes
 
-- Dados antigos: `meu-caderno-diario-v1`, objeto de data → lista de itens.
-- Marcador: `meu-caderno-diario-migrado-firebase-v1`, valor `"1"` após conclusão
-  ou quando não há objeto antigo utilizável.
-- A migração grava documentos na conta autenticada com `setDoc(merge: true)`
-  e aguarda `Promise.all`. IDs antigos são reaproveitados quando disponíveis.
-- Os dados antigos não são apagados. O marcador é global para a origem do
-  navegador, sem UID. Não há justificativa histórica registrada para essa escolha.
-- Não existe configuração explícita de cache persistente offline do Firestore.
-  Não interpretar a sessão persistente do Auth como backup offline das notas.
-- `storageBucket` aparece na configuração, mas Firebase Storage não é importado
-  nem utilizado; não há upload de arquivos.
+Painéis flutuantes: dialog, aria-modal, fundo inert, foco inicial, contenção de
+Tab, Escape e restauração de foco. Paleta preserva seleção ao abrir, usa setas
+no teclado e reposiciona conforme viewport. Rótulos, status, skip link, foco
+visível e movimento reduzido presentes. Sem certificação WCAG ou teste com
+leitor de tela/Safari físico.
 
-## Editor, calendário e navegação
+tests/browser.ps1 serve apenas em 127.0.0.1 e abre Chrome/Edge headless em perfil
+temporário. No modo padrão substitui firebase.js por tests/firebase.mock.js
+somente no servidor local. Scripts reais do app são testados com Map em memória,
+sem Firebase remoto. browser-checks.js cobre funções; responsive-checks.js,
+teclado/drawers; runner mede overflow/temas, movimento reduzido e console CDP.
+-Live carrega SDK real apenas na tela de login, sem credenciais. Saídas em
+tests/.artifacts são ignoradas. Instruções em tests/README.md.
 
-O “editor” atual é `input#novoItem`, com `maxlength="140"`. O valor é aparado com
-`trim()`; vazio não é salvo. Botão e Enter chamam `adicionarItem()`. Depois de
-salvar, o campo é limpo e recebe foco. Não há edição de texto já salvo, rich text,
-Markdown, arrastar itens ou anexos.
-
-O “calendário” é o `input type="date"` nativo. Seu evento `change` altera
-`state.data` e renderiza os itens já carregados. `hojeISO()`, `isoParaData()`,
-`formatarDataBR()` e `formatarDataLonga()` usam datas locais e localidade `pt-BR`.
-Não existe grade mensal, eventos de agenda ou biblioteca de calendário.
-
-## Marca-texto e aparência
-
-Seis botões em `#markerColors` alteram `state.cor`, `state.corNome`, rótulo e
-classe ativa. Ao concluir um item, sua cor passa a ser a cor selecionada; ao
-desmarcar, a cor é mantida no documento, mas o destaque deixa de ser exibido.
-Escolher uma cor não recolore automaticamente todos os itens existentes.
-
-`style.css` aplica o grifo via `.note-row.done .note-text::before` e variável
-`--highlight`. O visual imita papel pautado, margem e espiral, com fontes de
-sistema/manuscritas e breakpoint de 720 px. Não há fonte web carregada, dark mode,
-controle de tema ou media query `prefers-color-scheme`.
-
-## PWA e ícones
-
-Existe `meta name="theme-color"`, favicon `icone.png` e referência Apple para
-`icon-192.png` (arquivo ausente). Não há manifest nem service worker registrado,
-cache de aplicação, fluxo de instalação ou funcionalidade PWA implementada.
-Os links de ícones aparecem depois de `</head>` no HTML recebido; sua organização
-também foi preservada. Nenhuma correção de HTML faz parte de `PROMPT-0001`.
-
-## Dependências e limites da análise
-
-O código depende do SDK externo, da configuração remota do Firebase e de APIs
-modernas do navegador. Não há bibliotecas de editor/calendário, backend próprio,
-testes automatizados persistidos, lockfile ou pipeline de CI neste repositório.
-Disponibilidade das URLs do SDK, regras remotas, contas e hospedagem não foram
-verificadas nesta tarefa de documentação.
-
-A memória não entra no fluxo do aplicativo: HTML/JS/CSS não carregam seus arquivos.
-Checkpoints restauram código e assets versionados, não documentos do Firestore,
-usuários Auth, localStorage, cache ou configurações do serviço.
+Memória/checkpoints não participam da execução. Git restaura arquivos, não Auth,
+Firestore, regras remotas ou armazenamento do navegador.
