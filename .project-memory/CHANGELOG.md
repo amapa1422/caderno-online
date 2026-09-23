@@ -6,10 +6,10 @@ não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 ## CHANGE-0003
 
 Data: 2026-09-23.
-Hora: 10:24:28 -03:00 (checkpoint inicial); horário final no registro CP-0005.
+Hora: 10:24:28 -03:00 (checkpoint inicial); 10:37:58 -03:00 (final).
 Prompt/Task: PROMPT-0003 — finalizar o pedido de ontem, identificado em PROMPT-0002.
 Checkpoint inicial: CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
-Checkpoint final: CP-0005, commit em `refs/tags/CP-0005`.
+Checkpoint final: CP-0005, `fab3e45eb0ac623750cc5191b0b7a4e3ca88cdc4`.
 
 ### Objetivo
 
@@ -88,7 +88,7 @@ Hora: 16:53:42 -03:00 (checkpoint inicial); conclusão por CHANGE-0003.
 Prompt/Task: PROMPT-0002 — aplicar design system oficial.
 Checkpoint inicial: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 Checkpoint intermediário: CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
-Checkpoint final após retomada: CP-0005, `refs/tags/CP-0005`.
+Checkpoint final após retomada: CP-0005, `fab3e45eb0ac623750cc5191b0b7a4e3ca88cdc4`.
 
 ### Objetivo
 

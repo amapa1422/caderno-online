@@ -64,7 +64,8 @@ PROMPT-0003 concluiu o redesign iniciado em PROMPT-0002. CP-0004 preservou a
 implementação parcial recebida; CP-0005 registra a conclusão com ajustes de
 responsividade, foco, proteção de sessão e documentação atualizada.
 
-- Checkpoint final: **CP-0005**, commit em `refs/tags/CP-0005`.
+- Checkpoint final: **CP-0005**, `fab3e45eb0ac623750cc5191b0b7a4e3ca88cdc4`
+  (2026-09-23, 10:37:58 -03:00; `refs/tags/CP-0005`).
 - Inicial da retomada: CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.

@@ -21,7 +21,7 @@ CHANGE relacionado: CHANGE-0003.
 
 Checkpoint antes: **CP-0004**, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
 
-Checkpoint depois: **CP-0005**, commit em `refs/tags/CP-0005`.
+Checkpoint depois: **CP-0005**, `fab3e45eb0ac623750cc5191b0b7a4e3ca88cdc4`.
 
 Estado: Concluído localmente; 47 verificações, 18 combinações de viewport/tema,
 movimento reduzido, console e inicialização SDK real aprovados. Login/CRUD real,
@@ -48,7 +48,8 @@ CHANGE relacionado: `CHANGE-0002`; conclusão em `CHANGE-0003`.
 
 Checkpoint antes: **CP-0003**, `ac98d0649274c25d885b0e6074764ade3e800406`.
 
-Checkpoint depois: **CP-0005**, `refs/tags/CP-0005`, após a retomada PROMPT-0003.
+Checkpoint depois: **CP-0005**, `fab3e45eb0ac623750cc5191b0b7a4e3ca88cdc4`,
+após a retomada PROMPT-0003.
 Estado intermediário preservado em CP-0004, `3927d2b19e9d10a93bb66efd273e10880d286bc3`.
 
 Trecho fiel: “Faça as alterações diretamente nos arquivos do projeto.” /
