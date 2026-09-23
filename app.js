@@ -7,10 +7,10 @@ const $ = id => document.getElementById(id);
 const icon = name => '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"/></svg>';
 const STORAGE_KEY = "meu-caderno-diario-v1", MIGRATION_KEY = "meu-caderno-diario-migrado-firebase-v1";
 const state = {
-  usuario: null, data: hojeISO(), cor: null,
+  usuario: null, data: hojeISO(), cor: normalizarCor(preference("caderno-marker-color")) || "#E85D75",
   registros: {}, unsubscribe: null, ready: false, pending: 0, error: false, cached: false,
   session: 0, addPromise: null, drafts: new Map(), busyItems: new Set(), marking: new Set(),
-  editing: null, turning: false, selectedRange: null, paletteTarget: null, paletteAnchor: null,
+  editing: null, turning: false, selectedRange: null, actionRange: null, paletteAnchor: null, activeNote: null, deletion: null,
   month: hojeISO().slice(0, 7), drawer: null
 };
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -62,11 +62,12 @@ async function gravar(operation) {
     throw error;
   } finally { if (session === state.session) { state.pending = Math.max(0, state.pending - 1); atualizarStatus(); } }
 }
-function salvarItem(item) {
+function salvarItem(item, incluirConclusao = false) {
   const reference = referenciaItem(item.id), payload = {
     data: item.data, texto: item.texto,
     criadoEm: item.criadoEm || Date.now(), atualizadoEm: Date.now()
   };
+  if (incluirConclusao) payload.concluido = Boolean(item.concluido);
   // Optional substring ranges; no migration or replacement of legacy documents.
   if (Array.isArray(item.grifos)) {
     payload.grifos = normalizarGrifos(item.grifos, item.texto.length);
@@ -136,6 +137,7 @@ onAuthStateChanged(auth, async usuario => {
   pararSincronizacao(); clearTimeout(editTimer);
   state.usuario = usuario; state.ready = false; state.registros = {}; state.pending = 0; state.error = false;
   state.addPromise = null; state.editing = null; state.drafts.clear(); state.busyItems.clear(); state.marking.clear(); state.selectedRange = null;
+  state.activeNote = null; state.actionRange = null; state.deletion = null; $("confirmarExclusao").close();
   $("novoItem").value = ""; $("buscaPaginas").value = ""; $("senhaLogin").value = "";
   fecharPaleta(false); fecharPainel(false); $("telaLogin").hidden = !!usuario; $("aplicativo").hidden = !usuario;
   renderizar();
@@ -150,12 +152,10 @@ async function adicionarItem() {
   const text = $("novoItem").value.trim();
   if (!text || !state.usuario || !state.ready || state.addPromise) return false;
   const day = state.data, originalInput = $("novoItem").value, session = state.session;
-  const color = state.cor;
-  const item = { id: gerarId(), data: day, texto: text, criadoEm: Date.now(), grifos: color ? [{ inicio: 0, fim: text.length, cor: color }] : [] };
-  if (color) state.marking.add(item.id);
+  const item = { id: gerarId(), data: day, texto: text, concluido: false, criadoEm: Date.now(), grifos: [] };
   const operation = (async () => {
     try {
-      await salvarItem(item);
+      await salvarItem(item, true);
       if (session !== state.session) return false;
       if (state.drafts.get(day) === originalInput) state.drafts.delete(day);
       if (state.data === day && $("novoItem").value === originalInput) { $("novoItem").value = ""; if (!state.turning) $("novoItem").focus(); }
@@ -225,36 +225,80 @@ function renderizarItens() {
   items.forEach((item, index) => {
     let row = [...list.children].find(node => node.dataset.id === item.id);
     if (!row) { row = document.createElement("article"); row.dataset.id = item.id; row.className = "note-row"; }
-    const signature = JSON.stringify([item.texto, grifosDoItem(item)]);
+    const signature = JSON.stringify([item.texto, Boolean(item.concluido), grifosDoItem(item)]);
     if (state.editing?.id !== item.id && row.dataset.signature !== signature) {
-      row.dataset.signature = signature; row.className = "note-row";
-      row.innerHTML = '<div class="note-body"><span class="note-text">' + textoComGrifos(item) + '</span></div><div class="note-actions"><button class="icon-button note-options" type="button" data-action="options" aria-label="Opções da anotação" aria-expanded="false">' + icon("more") + '</button><div class="note-tools"><button class="icon-button" type="button" data-action="edit" aria-label="Editar anotação" data-tooltip="Editar">' + icon("edit") + '</button><button class="icon-button" type="button" data-action="mark" aria-label="Marca-texto da anotação" data-tooltip="Grifar">' + icon("marker") + '</button><button class="icon-button" type="button" data-action="delete" aria-label="Excluir anotação" data-tooltip="Excluir">' + icon("trash") + "</button></div></div>";
+      row.dataset.signature = signature; row.className = "note-row" + (item.concluido ? " done" : "");
+      row.innerHTML = '<div class="note-body" tabindex="0" aria-describedby="dicaInteracao"><span class="note-text">' + textoComGrifos(item) + '</span></div><div class="note-actions"><button class="icon-button complete-button" type="button" data-action="toggle" aria-label="' + (item.concluido ? "Desfazer conclusão" : "Marcar como feito") + '" aria-pressed="' + Boolean(item.concluido) + '">' + icon("check") + '</button><button class="icon-button delete-button" type="button" data-action="delete" aria-label="Excluir anotação">' + icon("close") + '</button></div><div class="note-context" aria-label="Ações da anotação"><button class="btn btn-ghost" type="button" data-action="edit">Editar</button><button class="btn btn-ghost" type="button" data-action="mark">' + icon("marker") + '<span>Grifar</span></button><button class="btn btn-ghost" type="button" data-action="unmark">Remover grifo</button></div>';
       if (state.marking.delete(item.id)) row.classList.add("is-marking");
     }
+    row.classList.toggle("note-active", state.activeNote === item.id);
     row.querySelectorAll("[data-action]").forEach(button => { button.disabled = state.busyItems.has(item.id); });
     if (list.children[index] !== row) list.insertBefore(row, list.children[index] || null);
   });
 }
 $("listaItens").addEventListener("animationend", event => { if (event.animationName === "marker-stroke") event.target.closest(".note-row")?.classList.remove("is-marking"); });
+$("listaItens").addEventListener("pointerdown", event => {
+  if (!event.target.closest('[data-action="mark"], [data-action="unmark"]')) return;
+  state.actionRange = capturarSelecao() || state.selectedRange;
+  if (event.pointerType === "mouse") event.preventDefault();
+});
 $("listaItens").addEventListener("click", async event => {
+  const body = event.target.closest(".note-body");
+  if (body && !event.target.closest("button, textarea") && !state.editing) { ativarAnotacao(body.closest("[data-id]").dataset.id); return; }
   const button = event.target.closest("[data-action]"), row = button?.closest("[data-id]");
   if (!button || !row || state.busyItems.has(row.dataset.id)) return;
   let item = encontrarItem(row.dataset.id); if (!item) return;
   const action = button.dataset.action;
-  if (action === "options") {
-    const open = !row.classList.contains("actions-open");
-    fecharOpcoes(); row.classList.toggle("actions-open", open); button.setAttribute("aria-expanded", String(open)); return;
-  }
   if (action === "edit") { await iniciarEdicao(item); return; }
   if (action === "finish-edit") { await finalizarEdicao(true); return; }
-  if (action === "mark") { abrirPaleta(button, { id: item.id, whole: true }); return; }
-  if (action !== "delete" || !await finalizarEdicao(true)) return;
+  if (action === "mark" || action === "unmark") {
+    const selection = state.actionRange || capturarSelecao() || state.selectedRange; state.actionRange = null;
+    await aplicarMarca(selection?.id === item.id ? selection : { id: item.id, whole: true }, action === "mark" ? state.cor : null); return;
+  }
+  const session = state.session;
+  if (!["delete", "toggle"].includes(action) || !await finalizarEdicao(true) || session !== state.session) return;
   item = encontrarItem(item.id); if (!item) return;
+  if (action === "delete") { pedirExclusao(item, button); return; }
   state.busyItems.add(item.id); renderizarItens();
   try {
-    const reference = referenciaItem(item.id); await gravar(() => deleteDoc(reference)); mostrarToast("Anotação excluída.");
+    await salvarItem({ ...item, concluido: !item.concluido, grifos: grifosDoItem(item) }, true);
+    if (session === state.session && !reducedMotion.matches) {
+      const control = [...$("listaItens").children].find(node => node.dataset.id === item.id)?.querySelector(".complete-button");
+      control?.animate([{ transform: "scale(.8)" }, { transform: "scale(1.12)" }, { transform: "scale(1)" }], { duration: 180 });
+    }
   } catch { state.marking.delete(item.id); }
-  finally { state.busyItems.delete(item.id); renderizar(); }
+  finally { if (session === state.session) { state.busyItems.delete(item.id); renderizar(); } }
+});
+function pedirExclusao(item, anchor) {
+  state.deletion = { id: item.id, session: state.session, anchor, saving: false };
+  $("trechoExclusao").textContent = item.texto;
+  $("erroExclusao").textContent = "";
+  $("confirmarExclusao").showModal(); $("cancelarExclusao").focus();
+}
+function cancelarExclusao() {
+  const deletion = state.deletion; if (deletion?.saving) return;
+  state.deletion = null; $("confirmarExclusao").close();
+  if (deletion?.anchor?.isConnected) deletion.anchor.focus({ preventScroll: true });
+}
+$("cancelarExclusao").addEventListener("click", cancelarExclusao);
+$("confirmarExclusao").addEventListener("cancel", event => { event.preventDefault(); cancelarExclusao(); });
+$("excluirConfirmado").addEventListener("click", async () => {
+  const deletion = state.deletion;
+  if (!deletion || deletion.saving || deletion.session !== state.session) return;
+  deletion.saving = true; $("excluirConfirmado").disabled = true; $("cancelarExclusao").disabled = true;
+  $("erroExclusao").textContent = "";
+  try {
+    const reference = referenciaItem(deletion.id);
+    await gravar(() => deleteDoc(reference));
+    if (deletion.session === state.session) {
+      state.deletion = null; $("confirmarExclusao").close();
+      if (state.activeNote === deletion.id) state.activeNote = null;
+      mostrarToast("Anotação excluída."); $("novoItem").focus({ preventScroll: true });
+    }
+  } catch {
+    if (deletion.session === state.session) $("erroExclusao").textContent = "Não foi possível excluir. A anotação foi mantida; tente novamente.";
+  }
+  finally { deletion.saving = false; $("excluirConfirmado").disabled = false; $("cancelarExclusao").disabled = false; }
 });
 async function iniciarEdicao(item) {
   if (state.editing?.id === item.id || !await finalizarEdicao(true)) return;
@@ -318,7 +362,7 @@ async function navegarPara(day) {
   if (!addSaved || session !== state.session) { state.turning = false; renderizar(); return false; }
   const forward = day > state.data, page = $("pagina");
   state.drafts.set(state.data, $("novoItem").value);
-  fecharPaleta(false); fecharPainel(false); state.selectedRange = null;
+  fecharPaleta(false); fecharPainel(false); state.selectedRange = null; state.actionRange = null; state.activeNote = null;
   page.inert = true; page.classList.add("turning"); page.classList.toggle("turning-back", !forward);
   [$("diaAnterior"), $("proximoDia"), $("irHoje")].forEach(button => { button.disabled = true; });
   try {
@@ -418,7 +462,8 @@ function capturarSelecao() {
 }
 document.addEventListener("selectionchange", () => {
   if (!$("paleta").hidden) return;
-  state.selectedRange = capturarSelecao(); $("abrirPaleta").querySelector("span").textContent = state.selectedRange ? "Grifar seleção" : "Marca-texto";
+  state.selectedRange = capturarSelecao();
+  if (state.selectedRange) ativarAnotacao(state.selectedRange.id);
 });
 const picker = { color: "#E85D75", ...hexParaHSV("#E85D75"), pointer: null, saving: false };
 let recentColors = [];
@@ -450,6 +495,7 @@ function atualizarPicker(color, fromHSV = false) {
   $("corNativa").value = color.toLowerCase();
   $("previewGrifo").style.setProperty("--highlight", color);
   $("corSelecionadaTexto").textContent = color;
+  state.cor = color; preference("caderno-marker-color", color); atualizarAmostra();
 }
 function posicionarPaleta() {
   if ($("paleta").hidden) return;
@@ -462,23 +508,18 @@ function posicionarPaleta() {
   palette.style.left = Math.max(left + gap("left"), Math.min(bounds.right - palette.offsetWidth, left + width - palette.offsetWidth - gap("right"))) + "px";
   palette.style.top = Math.max(top + gap("top"), Math.min(bounds.bottom + 8, top + height - palette.offsetHeight - gap("bottom"))) + "px";
 }
-function abrirPaleta(anchor, target) {
-  if (picker.saving) return;
-  state.paletteTarget = target || state.selectedRange; state.paletteAnchor = anchor;
-  const item = state.paletteTarget && encontrarItem(state.paletteTarget.id);
-  const ranges = item ? grifosDoItem(item) : [];
-  const range = state.paletteTarget?.whole ? ranges[0] : ranges.find(r => r.inicio <= state.paletteTarget?.inicio && r.fim > state.paletteTarget.inicio);
-  atualizarPicker(range?.cor || state.cor || recentColors[0] || "#E85D75");
+function abrirPaleta() {
+  state.paletteAnchor = $("abrirPaleta");
+  atualizarPicker(state.cor);
   $("paleta").hidden = false; $("abrirPaleta").setAttribute("aria-expanded", "true");
-  $("dicaPaleta").textContent = state.paletteTarget ? (state.paletteTarget.whole ? "Cor da anotação inteira." : "Cor do trecho selecionado.") : "Cor para a nova anotação.";
-  $("aplicarGrifo").textContent = state.paletteTarget ? "Aplicar" : "Usar cor";
-  $("removerGrifo").textContent = state.paletteTarget ? "Remover marca-texto" : "Sem marca-texto";
   renderizarRecentes(); posicionarPaleta(); $("campoCor").focus({ preventScroll: true });
 }
 function fecharPaleta(restoreFocus = true) {
-  const wasOpen = !$("paleta").hidden; $("paleta").hidden = true; $("abrirPaleta").setAttribute("aria-expanded", "false");
-  if (restoreFocus && wasOpen) (state.paletteAnchor?.isConnected ? state.paletteAnchor : $("abrirPaleta")).focus({ preventScroll: true });
-  state.paletteTarget = null; picker.pointer = null;
+  const wasOpen = !$("paleta").hidden;
+  $("paleta").hidden = true; $("abrirPaleta").setAttribute("aria-expanded", "false");
+  if (wasOpen) lembrarCor(state.cor);
+  if (restoreFocus && wasOpen) $("abrirPaleta").focus({ preventScroll: true });
+  picker.pointer = null;
 }
 $("abrirPaleta").addEventListener("pointerdown", event => { if (event.pointerType === "mouse") event.preventDefault(); });
 $("abrirPaleta").addEventListener("click", () => { if ($("paleta").hidden) abrirPaleta($("abrirPaleta")); else fecharPaleta(); });
@@ -517,35 +558,43 @@ $("hexCor").addEventListener("input", event => {
 });
 $("corNativa").addEventListener("input", event => atualizarPicker(normalizarCor(event.target.value)));
 $("coresRecentes").addEventListener("click", event => { const button = event.target.closest("[data-color]"); if (button) atualizarPicker(button.dataset.color); });
-async function aplicarMarca(color) {
-  if (picker.saving) return;
-  const target = state.paletteTarget, session = state.session;
-  if (!target) { state.cor = color; atualizarAmostra(); lembrarCor(color); fecharPaleta(); return; }
-  picker.saving = true; $("aplicarGrifo").disabled = true; $("removerGrifo").disabled = true;
+async function aplicarMarca(target, color) {
+  const session = state.session;
+  if (!await finalizarEdicao(true) || session !== state.session) return;
+  const item = encontrarItem(target.id);
+  if (!item || state.busyItems.has(item.id)) return;
+  state.busyItems.add(item.id); if (color) state.marking.add(item.id);
+  renderizarItens();
   try {
-    if (!await finalizarEdicao(true) || session !== state.session) return;
-    const item = encontrarItem(target.id); if (!item || state.busyItems.has(item.id)) return;
-    state.busyItems.add(item.id); if (color) state.marking.add(item.id);
-    try {
-      const grifos = target.whole ? (color ? [{ inicio: 0, fim: item.texto.length, cor: color }] : [])
-        : aplicarTrecho(grifosDoItem(item), target.inicio, target.fim, color);
-      await salvarItem({ ...item, grifos });
-      if (session === state.session) { lembrarCor(color); state.selectedRange = null; window.getSelection()?.removeAllRanges(); fecharPaleta(); }
-    } catch { state.marking.delete(item.id); }
-    finally { if (session === state.session) { state.busyItems.delete(item.id); renderizar(); } }
-  } finally { picker.saving = false; $("aplicarGrifo").disabled = $("hexCor").getAttribute("aria-invalid") === "true"; $("removerGrifo").disabled = false; }
+    const grifos = target.whole ? (color ? [{ inicio: 0, fim: item.texto.length, cor: color }] : [])
+      : aplicarTrecho(grifosDoItem(item), target.inicio, target.fim, color);
+    await salvarItem({ ...item, grifos });
+    if (session === state.session) { lembrarCor(color); state.selectedRange = null; window.getSelection()?.removeAllRanges(); }
+  } catch { state.marking.delete(item.id); }
+  finally { if (session === state.session) { state.busyItems.delete(item.id); renderizar(); } }
 }
-$("aplicarGrifo").addEventListener("click", () => aplicarMarca(picker.color));
-$("removerGrifo").addEventListener("click", () => aplicarMarca(null));
-function fecharOpcoes() {
-  $("listaItens").querySelectorAll(".actions-open").forEach(row => { row.classList.remove("actions-open"); row.querySelector("[data-action='options']")?.setAttribute("aria-expanded", "false"); });
+$("aplicarGrifo").addEventListener("click", () => fecharPaleta());
+function ativarAnotacao(id) {
+  state.activeNote = id;
+  $("listaItens").querySelectorAll(".note-row").forEach(row => {
+    row.classList.toggle("note-active", row.dataset.id === id);
+    const label = row.querySelector('[data-action="mark"] span');
+    if (label) label.textContent = state.selectedRange?.id === row.dataset.id ? "Grifar seleção" : "Grifar";
+  });
 }
+function fecharOpcoes() { state.selectedRange = null; ativarAnotacao(null); }
+$("listaItens").addEventListener("focusin", event => {
+  if (event.target.matches(".note-body")) ativarAnotacao(event.target.closest("[data-id]").dataset.id);
+});
 document.addEventListener("pointerdown", event => {
-  if (!$("paleta").hidden && !event.target.closest("#paleta, #abrirPaleta, [data-action='mark']")) fecharPaleta(false);
-  if (!event.target.closest(".note-actions")) fecharOpcoes();
+  if (!$("paleta").hidden && !event.target.closest("#paleta, #abrirPaleta")) fecharPaleta(false);
+  if (!event.target.closest(".note-row, #paleta, #abrirPaleta")) fecharOpcoes();
 });
 $("listaItens").addEventListener("keydown", event => {
-  if (event.key === "Escape") { const row = event.target.closest(".actions-open"); fecharOpcoes(); row?.querySelector("[data-action='options']")?.focus(); }
+  if (event.key === "Escape") {
+    const row = event.target.closest(".note-active");
+    row?.querySelector(".note-body")?.focus({ preventScroll: true }); fecharOpcoes();
+  }
 });
 $("workspace").addEventListener("scroll", posicionarPaleta, { passive: true });
 function atualizarViewport() {

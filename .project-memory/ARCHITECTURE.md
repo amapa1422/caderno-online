@@ -1,6 +1,6 @@
 ﻿# Arquitetura do Caderno Online
 
-Atualizada por PROMPT-0004 / CHANGE-0004 em 2026-09-23.
+Atualizada por PROMPT-0005 / CHANGE-0005 em 2026-09-23.
 
 ## Estrutura e interface
 
@@ -19,9 +19,14 @@ Busca filtra datas/textos já sincronizados. Calendário mostra 42 dias com nota
 sinalizadas e navegação por setas do teclado. Resumo conta somente anotações;
 não há agenda com horários nem conteúdo fictício em produção.
 
-Compositor antes da lista: textarea, marca-texto opcional, Adicionar e ajuda.
-Cada nota é texto manuscrito com menu discreto de opções (edição, grifo, exclusão).
-Não há checkbox, alternância de conclusão, riscado ou opacidade por tarefa.
+Compositor antes da lista: textarea, seletor global de marca-texto, Adicionar e
+ajuda. Notas novas sem grifo. Cada linha tem ✓ feito/desfazer e × excluir à
+direita, sem checkbox à esquerda nem três pontinhos. Tocar/focar/selecionar texto
+revela Editar, Grifar e Remover grifo, preservando funcionalidades antigas.
+Feitas ficam com opacidade .86 no texto (incluindo grifo visível), check mais
+forte e microanimação 180 ms ao alternar. Não há riscado ou progresso de tarefas.
+Exclusão usa dialog nativo, foco inicial Cancelar, Escape/cancelamento e retry
+sem perder documento em falhas. Auth limpa a confirmação ao mudar de sessão.
 Tipografia das notas: Segoe Print, Bradley Hand, cursive; recuperada do CSS em
 f4b7e9f/CP-0003. Sem import/@font-face anterior; usa instalação do sistema, sem
 redistribuir fontes proprietárias. UI/compositor continuam com fonte do design
@@ -58,15 +63,16 @@ Documento: users/{uid}/caderno/{id}. UUID com fallback tempo/aleatoriedade.
 | --- | --- |
 | data | YYYY-MM-DD do dia original da operação. |
 | texto | Texto simples; entrada/edição limitada a 140 caracteres na interface. |
-| concluido | Campo histórico preservado; lido apenas pelo adaptador de grifos antigos. |
+| concluido | Booleano existente reutilizado; ausente significa não concluído. |
 | cor | Campo histórico de tinta; HEX curto/longo, nomes CSS/aliases e RGB aceitos na leitura. |
 | criadoEm / atualizadoEm | Milissegundos do relógio cliente. |
 | grifos | Opcional: array de { inicio, fim, cor }, índices UTF-16, fim exclusivo. |
 | versaoGrifos | 2 nas novas gravações; torna grifos a fonte exclusiva dos destaques. |
 
-salvarItem mantém setDoc com merge e caminho original, sem escrever cor/concluido
-em operações novas. Campos antigos e desconhecidos permanecem no documento.
-Novas notas usam grifos (vazio ou faixa integral) e versaoGrifos: 2. Mudanças de
+salvarItem mantém setDoc com merge e caminho original. Grava concluido apenas
+na criação e na alternância de feito; edição/grifo não o sobrescrevem. Não há
+completed/done/checked duplicados. Campos antigos/extra permanecem no documento.
+Novas notas usam grifos:[], concluido:false e versaoGrifos:2. Mudanças de
 texto/cor gravam v2 somente na nota afetada. Não há migração em massa.
 
 grifosDoItem adapta documentos anteriores: cor+concluido:true define a tinta
@@ -75,11 +81,12 @@ tinta que antes era apenas preferência. Sobrepõe ranges parciais existentes.
 Assim grifos:[] antigo não apaga tinta integral. Já em v2, grifos:[] significa
 remoção explícita, mesmo que cor/concluido antigos continuem intactos. A versão
 é necessária para distinguir esses casos sem modificar campos históricos.
-Cores ausentes/inválidas ficam sem grifo. Não existe interação de conclusão.
+Cores ausentes/inválidas ficam sem grifo. Alternar conclusão também grava ranges
+visuais atuais e v2 na nota afetada; assim desfazer feito não apaga tinta legada.
 
-Exclusão continua deleteDoc, imediata e sem lixeira. Configuração, regras remotas
+Exclusão usa deleteDoc apenas depois de confirmar, sem lixeira. Configuração, regras remotas
 e autenticação não mudaram. Regras devem aceitar grifos e versaoGrifos e não
-exigir campos de tarefa em notas novas; isso requer validação em conta real.
+exigir cor legada em notas novas; isso requer validação em conta real.
 
 - Inclusão explícita protegida por addPromise contra repetição. Captura data/ID
   antes do await; resposta não limpa um texto novo digitado durante a gravação.
@@ -105,9 +112,12 @@ como dado legado, mas não inventa rosa para registros sem cor. Marcador não
 separado por UID, comportamento herdado. Firebase Storage não é utilizado.
 
 Preferências: caderno-theme, caderno-sidebar, caderno-agenda e
-caderno-recent-colors (até seis HEX distintos, sem textos/notas). A seleção da
-nova anotação inicia sem cor; escolher cor mantém essa preferência na aba até
-escolher Sem marca-texto. Tema segue o sistema
+caderno-recent-colors (até seis HEX distintos, sem textos/notas) e
+caderno-marker-color (HEX atual global; default #E85D75). Picker só existe no
+topo, atualiza cor/indicador/preferência ao vivo, nunca recolore notas sozinho.
+Ao aplicar na linha/seleção, captura cor atual e salva somente essa nota. Remover
+grifo não muda preferência global. Novas notas sem tinta automaticamente.
+Tema segue o sistema
 até escolha explícita e é aplicado antes do CSS. Auth persistente não significa
 notas offline; não há cache persistente Firestore configurado explicitamente.
 
@@ -116,10 +126,11 @@ notas offline; não há cache persistente Firestore configurado explicitamente.
 Painéis flutuantes: dialog, aria-modal, fundo inert, foco inicial, contenção de
 Tab, Escape e restauração de foco. Picker usa Pointer Events/capture no campo
 HSV, range Hue nativo, input HEX validado, fallback input color, preview ao vivo
-e recentes. Setas ajustam S/V (Shift acelera). Drag/input só atualizam preview;
-Usar cor altera preferência do compositor e Aplicar grava uma nota uma vez.
-Texto selecionado continua podendo receber grifo parcial. A remoção de grifo
-tem ação própria. Paleta fecha fora/Escape, mantém foco e seleção, respeita
+e recentes. Setas ajustam S/V (Shift acelera). Drag/input atualizam preview e
+preferência global local, sem escrita Firestore. Pronto fecha; recentes registrados
+ao fechar/aplicar. Ações Grifar/Remover grifo na nota não abrem seletor individual.
+Texto selecionado aceita grifo parcial; pointerdown captura seleção antes do
+foco mudar para o botão. Paleta fecha fora/Escape, mantém foco e seleção, respeita
 visualViewport e safe-area, com rolagem interna quando a altura é pequena.
 O shell acompanha visualViewport; com compositor focado, resize traz Adicionar
 para a área visível. Teclado real de iOS/Android ainda exige teste manual.

@@ -1,6 +1,6 @@
 ﻿# Estado atual
 
-Atualizado em: 2026-09-23 — PROMPT-0004 / CHANGE-0004.
+Atualizado em: 2026-09-23 — PROMPT-0005 / CHANGE-0005.
 Este arquivo descreve somente o presente. Histórico em CHANGELOG.md.
 
 ## Projeto e funcionalidades
@@ -16,18 +16,23 @@ com Firebase Auth e sincronização Firestore em tempo real.
 - Navegação por data, calendário, Hoje e dia anterior/seguinte com virada de folha.
 - Painéis móveis com fundo inerte, Escape, contenção e devolução de foco.
 - Inclusão explícita de anotações de até 140 caracteres por Adicionar/Enter;
-  Shift+Enter insere nova linha. Compositor acima da lista, com grifo opcional.
+  Shift+Enter insere nova linha. Compositor acima da lista; novas notas sem grifo.
   Novas notas não têm autosave.
 - Edição de notas existentes com autosave após 650 ms, salvamento serializado
   e preservação de texto em falhas. Navegação aguarda inclusão/edição pendente.
-- Anotações sem checkbox, conclusão, progresso ou estado de tarefa.
+- Anotações com feito/desfazer verde e excluir vermelho à direita, sem checkbox
+  à esquerda ou progresso de tarefas. Feitas permanecem visíveis com grifo intacto.
 - Fonte original Segoe Print nas notas, com Bradley Hand/cursive como fallbacks
   do sistema; tipografia do design system preservada no restante da interface.
 - Marca-texto livre: campo saturação/brilho, barra Hue, HEX, seletor nativo,
-  preview ao vivo, seis cores recentes locais e opção sem marca-texto.
+  preview ao vivo e seis cores recentes locais. Cor global persistida no navegador,
+  definida exclusivamente pelo seletor do topo para os próximos grifos.
 - Grifo de nota inteira/trechos, recoloração e remoção; animação de passada de
   340 ms e transparência ajustada por tema. Arraste não escreve no Firestore.
-- Botão discreto de opções em cada nota: edição, marca-texto e exclusão imediata.
+- Concluir usa o campo legado concluido. Exclusão só ocorre após confirmação
+  em dialog; cancelar/Escape preservam a nota. Microanimação de feito de 180 ms.
+- Sem três pontinhos: tocar/focar/selecionar o texto revela edição, grifar com
+  a cor global e remover grifo. Alterar cor global não recolore notas existentes.
 - Feedback de gravação, carregamento, erro/conexão e movimento reduzido.
 - Rascunhos separados por dia em memória da aba, limpos ao mudar de sessão;
   aviso de saída com texto pendente. Não persistem após fechar/recarregar a aba.
@@ -58,12 +63,13 @@ Sem framework, bundler, package.json ou pipeline de deploy versionados.
 ## Dados e limites
 
 Coleção users/{uid}/caderno, gravação por setDoc com merge. Novas operações usam
-data, texto, criadoEm, atualizadoEm, grifos e versaoGrifos: 2. Campos antigos
-cor/concluido são mantidos intactos nos documentos existentes, sem alternar
-conclusão. Um adaptador de leitura conserva grifos antigos. O discriminador
+data, texto, criadoEm, atualizadoEm, grifos e versaoGrifos: 2; criação/conclusão
+também gravam concluido (sem campos duplicados). cor legada permanece intacta;
+edição/grifo não mudam conclusão. Um adaptador de leitura conserva grifos antigos. O discriminador
 versaoGrifos distingue remoção explícita de grifo de arrays vazios legados sem
-apagar campos ou migrar a coleção. Apenas notas criadas/editadas recebem v2.
-Removidas por solicitação: ações de conclusão, checkboxes e paleta fixa.
+apagar campos ou migrar a coleção. Apenas notas criadas ou alteradas recebem v2.
+Removidos por solicitação atual: três pontinhos e seletor de cor por nota.
+Conclusão foi restaurada por PROMPT-0005, substituindo DEC-0008 via DEC-0010.
 Autenticação, configuração Firebase e regras remotas permanecem inalteradas.
 
 Regras remotas não são versionadas. Seu suporte a grifos/versaoGrifos e a
@@ -72,14 +78,14 @@ offline de notas explicitamente configurada. Git não restaura dados remotos.
 
 ## Última alteração e checkpoint estável
 
-PROMPT-0004 recuperou criação acima da lista e caligrafia original, retirou o
-conceito de tarefa e implementou marca-texto livre, mantendo o shell moderno.
+PROMPT-0005 restaurou feito discreto, confirmou exclusão e tornou a cor global,
+mantendo criação acima da lista, caligrafia, seletor livre e shell moderno.
 
-- Checkpoint final: **CP-0007**, `5e05485d4400f76409da3be99d0d213c2ceb321f`.
-- Inicial: CP-0006, `3ab3b527c06d0d76990d9483c7e295af8a36811f`.
+- Checkpoint final: **CP-0009**, commit em `refs/tags/CP-0009`.
+- Inicial: CP-0008, `429955012b01bb6e5d8c91a7b3d084ddfbad1557`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.
-- Nível validado: 57 verificações funcionais, 6 de reload, 11 de teclado/painéis,
+- Nível validado: 64 verificações funcionais, 8 de reload, 13 de teclado/painéis,
   arraste via CDP com mouse/toque, viewport reduzido 390x360, nove larguras
   (320–1920 px) nos dois temas, movimento reduzido e console sem erros em Chrome
   headless com backend simulado. Capturas desktop/mobile inspecionadas.
@@ -90,4 +96,4 @@ conceito de tarefa e implementou marca-texto livre, mantendo o shell moderno.
   dispositivos, Safari/iOS, teclado físico mobile e leitores de tela. Dispositivos
   sem as fontes originais usam cursive do sistema. Não é homologação de produção.
 - Checkpoints locais, sem push/deploy. Commit complementar de hashes pertence
-  ao mesmo PROMPT-0004 e não altera o aplicativo nem move CP-0007.
+  ao mesmo PROMPT-0005 e não altera o aplicativo nem move CP-0009.

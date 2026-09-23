@@ -3,6 +3,66 @@
 Adicione novas entradas no topo, após esta introdução. Preserve as anteriores;
 não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
+## CHANGE-0005
+
+Data: 2026-09-23. Hora inicial: 15:08:43 -03:00.
+Prompt: PROMPT-0005. Inicial: CP-0008, `429955012b01bb6e5d8c91a7b3d084ddfbad1557`.
+Final: CP-0009, commit em `refs/tags/CP-0009`.
+
+### Objetivo
+
+Restaurar feito discreto, confirmar exclusão, remover três pontinhos e tornar
+global a preferência de marca-texto, substituindo explicitamente DEC-0008.
+
+### Arquivos alterados
+
+app.js, index.html, style.css; tests/browser-checks.js, browser.ps1,
+reload-checks.js, responsive-checks.js e README.md; CURRENT_STATE.md,
+ARCHITECTURE.md, DECISIONS.md, PROMPTS.md, CHANGELOG.md, KNOWN_ISSUES.md e
+checkpoints CP-0008/CP-0009 na memória. color.js e firebase.js preservados.
+
+### Alterações realizadas / funcionalidades afetadas
+
+Cada linha tem check verde feito/desfazer e × vermelho à direita, sem checkbox
+à esquerda. Conclusão reutiliza concluido, mantém grifo e texto visíveis com
+opacidade .86 e animação 180 ms. Exclusão abre dialog com Cancelar em foco;
+falha mantém documento, informa erro no dialog e permite tentar novamente.
+Removidos três pontinhos e picker individual. Tocar/focar/selecionar texto
+revela Editar, Grifar e Remover grifo, preservando funções anteriores.
+
+Picker do topo mantém HSV/HEX/preview/recentes e atualiza indicador e preferência
+caderno-marker-color em localStorage. Alterar preferência não grava no Firestore
+nem recolore notas antigas. Aplicar na nota/trecho usa explicitamente cor atual;
+remover mantém texto e conclusão. Novas notas começam sem grifo. Toggle converte
+somente os ranges da nota afetada para v2, preservando tinta legada ao desfazer.
+Fonte manuscrita, compositor acima, shell, calendário e autenticação mantidos.
+DEC-0010 registra substituição da decisão anterior, preservando seu histórico.
+
+### Possíveis impactos
+
+Sem migração em massa ou campos duplicados de conclusão. Merge preserva campos
+antigos/extra. Preferência de cor vale para este navegador, sem sincronização
+entre dispositivos. Regras remotas precisam aceitar grifos/versaoGrifos.
+
+### Testes realizados
+
+PowerShell/CDP: 64 verificações funcionais + 8 de reload + 13 de teclado/mobile.
+CRUD, concluir/desfazer, exclusão/cancelar/falha/retry, persistência de cor,
+grifos antigos, recoloração explícita e compatibilidade legada aprovados.
+Seleção real com mouse preservada ao clicar em Grifar; arraste mouse/toque
+atualiza preview sem escrita. Nove larguras (320–1920 px) nos dois temas sem
+overflow; viewport 390x360, movimento reduzido e console sem erros. Capturas
+desktop/mobile inspecionadas. Fonte renderizada confirmada como Segoe Print.
+SDK real inicializado em perfil temporário sem autenticar/escrever remotamente;
+executado antes do ajuste final da mensagem de erro do dialog, coberta pela
+última suíte completa. git diff --check sem erros.
+
+### Resultado
+
+Concluído localmente. Conta real/Firestore, regras, sincronização entre dispositivos,
+teclado físico mobile, Safari/iOS e leitores de tela exigem validação manual.
+Checkpoints locais, sem push/deploy. Hash final registrado por commit de metadados.
+
 ## CHANGE-0004
 
 Data: 2026-09-23. Hora inicial: 12:34:58 -03:00.

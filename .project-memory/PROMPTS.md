@@ -5,6 +5,28 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0005
+
+Data: 2026-09-23, 15:08:43 -03:00 (checkpoint inicial).
+Resumo: Novo Texto colado.txt recebido durante finalização de PROMPT-0004.
+Substitui explicitamente remoção de conclusão: restaurar feito/desfazer com
+ícone verde discreto à direita e excluir vermelho com confirmação. Remover
+três pontinhos e preservar edição/grifos em interação apropriada. Picker apenas
+no topo define cor global persistida localmente; aplicar/remover por nota usa
+essa cor sem recolorir notas antigas automaticamente. Manter fonte, shell,
+calendário, auth e animação de páginas. Testar CRUD/conclusão/cancelamento,
+cor global/reload/recoloração explícita, legados, temas, mobile e console.
+Inicial: CP-0008, `429955012b01bb6e5d8c91a7b3d084ddfbad1557`.
+Final: CP-0009, commit em `refs/tags/CP-0009`. CHANGE-0005.
+Arquivos: app.js, index.html, style.css, testes e memória do projeto.
+Estado: Concluído e validado localmente: 64 verificações funcionais, 8 de reload,
+13 de teclado/mobile, seleção real via mouse, arraste mouse/toque, 18 combinações
+de viewport/tema, viewport curto, movimento reduzido e console sem erros.
+SDK real inicializado sem conta/escrita remota. Conta real, regras e dispositivos
+físicos pendentes. CP-0007 preserva a etapa anterior localmente validada.
+Trecho: “Esta solicitação substitui a decisão anterior de remover completamente
+o conceito de item concluído.” Sem push/deploy nem migração destrutiva.
+
 ## PROMPT-0004
 
 Data: 2026-09-23, 12:34:58 -03:00 (checkpoint inicial).

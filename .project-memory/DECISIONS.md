@@ -5,10 +5,34 @@ o status da antiga para `Substituída por DEC-XXXX`, sem apagar seu contexto.
 As razões originais das escolhas de código anteriores à memória não são conhecidas;
 observações do baseline estão identificadas como tal.
 
+## DEC-0010
+
+Título: Feito discreto à direita, exclusão confirmada e marca-texto global.
+Status: Ativa. Substitui DEC-0008 em conclusão, ações da linha e seleção de cor.
+Data: 2026-09-23. Origem: PROMPT-0005 / CHANGE-0005.
+Motivo: O novo pedido substitui explicitamente a retirada de conclusão e remove
+três pontinhos. Preserva a caligrafia e o compositor acima da lista.
+Decisão: Reutilizar concluido no Firestore, sem campos duplicados. Botões ✓ verde
+e × vermelho à direita, sem checkbox à esquerda. Conclusão reduz discretamente
+intensidade, permanece visível e conserva grifos; microanimação de 180 ms.
+Excluir abre dialog nativo com Cancelar focado, confirmação e retry em falha.
+Edição/grifar/remover grifo ficam em ações contextuais ao tocar/focar/selecionar
+o texto, sem três pontinhos nem seletor individual. Seleção preservada no clique.
+
+Cor global em caderno-marker-color local; fallback #E85D75. Picker do topo altera
+preferência/indicador ao vivo, sem escrever nas notas; fechar registra recentes.
+Aplicar por nota/trecho usa a cor atual; remover só altera ranges. Notas novas
+nascem sem grifo e não concluídas. Grifos antigos só mudam por ação explícita.
+Mantém grifos/versaoGrifos:2; ao alternar feito, converte visual legado em ranges
+da nota afetada para desfazer conclusão sem apagar tinta. Sem migração em massa,
+mudança de auth/configuração/regras ou estrutura de coleção.
+Arquivos: app.js, index.html, style.css, testes e memória. DEC-0009 permanece ativa.
+
 ## DEC-0008
 
 Título: Diário sem tarefas; destaque definido por grifos independentes de conclusão.
-Status: Ativa. Substitui DEC-0006 nos aspectos de interação e paleta de cores.
+Status: Substituída por DEC-0010 em conclusão, ações da linha e cor global.
+Substituiu DEC-0006 nos aspectos de interação e paleta; texto histórico preservado.
 Data: 2026-09-23. Origem: PROMPT-0004 / CHANGE-0004.
 Motivo: O usuário solicitou retirar integralmente checkbox/conclusão, criar acima
 da lista e oferecer qualquer cor, mantendo o shell moderno.

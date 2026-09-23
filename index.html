@@ -29,7 +29,7 @@
       <symbol id="i-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
       <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
-      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
       <symbol id="i-marker" viewBox="0 0 24 24"><path d="m14 3 7 7-9 9-7-7 9-9Zm-9 9-2 6 3 3 6-2M3 21h6"/></symbol>
       <symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Z"/></symbol>
@@ -97,6 +97,7 @@
             <p id="dicaAnotacao" class="composer-hint">Enter para adicionar · Shift + Enter para nova linha</p>
           </form>
           <div class="page-toolbar"><span class="section-label">ANOTAÇÕES</span><span id="contadorItens">0 itens</span></div>
+          <p id="dicaInteracao" class="sr-only">Toque ou foque no texto para editar, grifar com a cor do topo ou remover o marca-texto.</p>
           <section id="listaItens" class="notes-list" aria-label="Anotações do dia" aria-busy="true"></section>
           <footer class="page-footer"><span class="page-rule"></span><svg class="icon"><use href="#i-book"/></svg><span id="numeroPagina"></span></footer>
         </article>
@@ -127,9 +128,16 @@
     <p id="erroCor" class="color-error" role="status"></p>
     <div class="highlight-preview"><span class="note-text"><mark id="previewGrifo">Exemplo de marca-texto</mark></span></div>
     <div class="recent-heading">Cores recentes</div><div id="coresRecentes" class="recent-colors" role="group" aria-label="Cores recentes"></div>
-    <p id="dicaPaleta">Escolha uma cor para a nova anotação.</p>
-    <div class="picker-actions"><button id="removerGrifo" class="btn btn-ghost" type="button">Sem marca-texto</button><button id="aplicarGrifo" class="btn btn-primary" type="button">Usar cor</button></div>
+    <p id="dicaPaleta">Cor padrão para os próximos grifos. Os grifos existentes mantêm suas cores.</p>
+    <div class="picker-actions"><button id="aplicarGrifo" class="btn btn-primary" type="button">Pronto</button></div>
   </section>
+  <dialog id="confirmarExclusao" class="delete-dialog" aria-labelledby="tituloExclusao" aria-describedby="textoExclusao">
+    <h2 id="tituloExclusao">Excluir anotação?</h2>
+    <p id="textoExclusao">Essa anotação será removida do seu caderno.</p>
+    <p id="trechoExclusao" class="delete-excerpt"></p>
+    <p id="erroExclusao" class="delete-error" role="alert"></p>
+    <div class="dialog-actions"><button id="cancelarExclusao" class="btn btn-ghost" type="button" autofocus>Cancelar</button><button id="excluirConfirmado" class="btn btn-danger" type="button">Excluir</button></div>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <noscript>Ative o JavaScript no navegador para acessar o seu caderno.</noscript>
   <script type="module" src="./app.js"></script>

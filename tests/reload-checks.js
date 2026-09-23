@@ -13,8 +13,10 @@ async function () {
   assert(document.querySelector('[data-id="legacy-empty-ranges"] mark'), 'reload: untouched old highlights still render');
   assert(notes.some(node => node.textContent === 'Anotação sem marca-texto' && !node.querySelector('mark')), 'reload: plain note persists');
   $('abrirPaleta').click();
-  assert(document.querySelectorAll('.recent-color').length === 6 && document.querySelector('.recent-color').dataset.color === '#654321', 'reload: recent colors restored from preference');
+  assert(document.querySelectorAll('.recent-color').length === 6 && document.querySelector('.recent-color').dataset.color === '#DF4A73', 'reload: recent colors restored from preference');
+  assert($('hexCor').value === '#DF4A73' && $('amostraCor').getAttribute('aria-label') === '#DF4A73', 'reload: global color restored in picker and top indicator');
   $('fecharPaleta').click();
-  assert(!document.querySelector('.note-check, [role="checkbox"], [data-action="toggle"]'), 'reload: no task controls');
+  assert(!document.querySelector('.note-check, [role="checkbox"], [data-action="options"]'), 'reload: no checkbox or ellipsis menu');
+  assert(colored.closest('.note-row').classList.contains('done'), 'reload: completion persists alongside saved highlight');
   return { ok: true, tests: results.length, results };
 }

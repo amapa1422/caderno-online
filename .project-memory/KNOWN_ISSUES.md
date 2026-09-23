@@ -1,6 +1,6 @@
 # Problemas conhecidos
 
-Levantamento inicial no BASELINE-0001, atualizado por CHANGE-0003 em 2026-09-23.
+Levantamento inicial no BASELINE-0001, atualizado por CHANGE-0005 em 2026-09-23.
 Estados: `OPEN`, `INVESTIGATING`, `FIXED`, `WONTFIX`. Ao corrigir, preserve a entrada,
 marque `FIXED` e indique o CHANGE responsável e a validação.
 
@@ -127,7 +127,18 @@ Correção: Painéis abertos transitam apenas transform; visibility fica imediat
 Validação: Foco inicial, Tab/Shift+Tab, Escape, backdrop, calendário por teclado
 e paleta no viewport de 320 px aprovados.
 
-## Limites de validação em CHANGE-0004
+## Limites de validação em CHANGE-0005
+
+64 verificações funcionais, 8 de reload, 13 de teclado/mobile; seleção com mouse,
+arraste mouse/toque CDP, 18 combinações de viewport/tema, viewport 390x360,
+movimento reduzido e console sem erros. Exclusão com cancelar/retry e mensagem
+de falha dentro do dialog; conclusão legada e cor global persistida verificadas.
+SDK real inicializado sem conta. Sem novos bugs confirmados nem escrita remota.
+Pendentes: conta real/regras aceitando grifos/versaoGrifos, sincronização entre
+dispositivos, teclado físico mobile, Safari/iOS e leitor de tela. Fonte original
+depende da instalação no SO. Não equivale a homologação de produção.
+
+## Limites de validação em CHANGE-0004 (histórico)
 
 57 verificações funcionais, 6 de reload, 11 de teclado/mobile, mouse/toque CDP,
 18 viewports/temas, viewport 390x360, fonte Segoe Print efetiva e console sem erros.

@@ -322,8 +322,8 @@ html[data-theme="dark"] .eyebrow { color: var(--accent-400); }
 
 .note-row.is-marking mark { animation: marker-stroke var(--dur-marker) var(--ease-enter) both; }
 @keyframes marker-stroke { from { background-size: 0% 76%; } to { background-size: 100% 76%; } }
-.note-actions { display: flex; gap: 0; opacity: 0; transition: opacity var(--dur-fast); }
-.note-actions .icon-button { width: 28px; height: 28px; }
+.note-actions { display: flex; gap: 0; opacity: .6; transition: opacity var(--dur-fast); }
+.note-actions .icon-button { width: 28px; height: 32px; }
 .note-actions .icon { width: 14px; height: 14px; }
 .note-row:hover .note-actions, .note-row:focus-within .note-actions { opacity: 1; }
 .note-actions [data-action="delete"]:hover { color: var(--danger); }
@@ -342,10 +342,29 @@ html[data-theme="dark"] .eyebrow { color: var(--accent-400); }
 #contadorItens { font-size: var(--fs-xs); color: var(--text-muted); }
 .color-preview.is-none { background: linear-gradient(135deg, transparent 44%, var(--text-muted) 46% 54%, transparent 56%); border-color: var(--text-muted); }
 .note-actions { position: relative; align-self: start; }
-.note-tools { display: none; position: absolute; z-index: 6; right: 0; top: 100%; padding: var(--sp-1); gap: var(--sp-1); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--elevated); box-shadow: var(--shadow-sm); }
-.note-row.actions-open .note-tools { display: flex; }
-.note-row.actions-open .note-actions { opacity: 1; }
-.note-actions .icon-button { width: 36px; height: 36px; }
+.note-context { display: none; grid-column: 1 / -1; flex-wrap: wrap; gap: var(--sp-1); }
+.note-row.note-active .note-context { display: flex; }
+.note-context .btn { min-height: 32px; padding: var(--sp-1) var(--sp-2); color: var(--text-muted); font-size: var(--fs-2xs); }
+.note-context .icon { width: 14px; height: 14px; }
+.complete-button { color: #15803d; }
+html[data-theme="dark"] .complete-button { color: #86cfa0; }
+.delete-button { color: var(--danger); }
+.note-row.done .note-text { opacity: .86; transition: opacity 180ms ease; }
+.note-row.done .complete-button { color: #15803d; }
+html[data-theme="dark"] .note-row.done .complete-button { color: #86efac; }
+.note-row.done .complete-button .icon { stroke-width: 3; }
+.note-row.done .note-actions { opacity: 1; }
+.note-body { cursor: text; }
+.delete-dialog { width: min(360px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: var(--sp-6); color: var(--text-strong); background: var(--elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.delete-dialog::backdrop { background: var(--overlay); }
+.delete-dialog h2 { font-size: var(--fs-lg); margin-bottom: var(--sp-3); }
+.delete-dialog > p { color: var(--text-muted); font-size: var(--fs-sm); line-height: var(--lh-copy); }
+.delete-dialog .delete-excerpt { margin-top: var(--sp-3); max-height: 120px; overflow: auto; overflow-wrap: anywhere; color: var(--text); }
+.delete-dialog .delete-error { color: var(--danger); margin-top: var(--sp-2); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: var(--sp-2); margin-top: var(--sp-5); }
+.dialog-actions .btn { min-height: 40px; }
+.btn-danger { color: white; background: #b91c1c; }
+.btn-danger:hover { background: #991b1b; color: white; }
 .page-footer { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-16); color: var(--text-muted); font-size: var(--fs-2xs); }
 .page-footer .icon { width: 14px; height: 14px; }
 .page-rule { height: 1px; flex: 1; background: var(--border); }
@@ -354,6 +373,7 @@ html[data-theme="dark"] .eyebrow { color: var(--accent-400); }
 .editing-footer span { font-size: var(--fs-2xs); color: var(--text-muted); }
 .note-row.is-editing { grid-template-columns: minmax(0, 1fr); }
 .note-row.is-editing > .note-actions { display: none; }
+.note-row.is-editing > .note-context { display: none; }
 /* Context panel */
 .agenda-panel { min-width: 0; overflow-y: auto; background: var(--panel-bg); border-left: 1px solid var(--border); padding: calc(var(--sp-4) + env(safe-area-inset-top)) var(--sp-6) calc(var(--sp-6) + env(safe-area-inset-bottom)); }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-7); }
@@ -479,7 +499,7 @@ html[data-theme="dark"] .cal-day.today { color: var(--accent-400); }
   .note-row { grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-2); padding-bottom: var(--sp-2); }
   .note-actions { grid-column: 2; justify-content: flex-end; }
   .note-text { font-size: 18px; }
-  .note-actions .icon-button { width: 36px; height: 32px; }
+  .note-actions .icon-button { width: 28px; height: 36px; }
     .composer { gap: var(--sp-2); }
   .composer-footer > span { max-width: 155px; }
   .composer-footer .btn { min-height: 40px; }

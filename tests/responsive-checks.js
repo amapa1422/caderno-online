@@ -27,5 +27,12 @@ async function () {
   $('abrirPaleta').click();
   document.querySelector('.page-heading').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
   assert($('paleta').hidden, 'mobile: outside tap closes picker');
+  const row = document.querySelector('.note-row');
+  row.querySelector('[data-action="delete"]').click();
+  await new Promise(resolve => setTimeout(resolve, 30));
+  const dialog = $('confirmarExclusao'), rect = dialog.getBoundingClientRect();
+  assert(dialog.open && rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight, 'mobile: delete confirmation fits viewport');
+  $('cancelarExclusao').click();
+  assert(!dialog.open && row.isConnected, 'mobile: cancelling delete keeps note');
   return { ok: true, tests: results.length, results };
 }
