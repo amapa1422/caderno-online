@@ -1,109 +1,131 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#ece8df">
-  <title>Meu Caderno</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Seu caderno diário. Anote, organize e encontre espaço para cada dia.">
+  <title>Caderno Online</title>
+  <link rel="icon" type="image/png" href="./icone.png">
+  <link rel="apple-touch-icon" href="./icone.png">
+  <script>
+    (() => {
+      let theme;
+      try { theme = localStorage.getItem('caderno-theme'); } catch {}
+      document.documentElement.dataset.theme = ['light', 'dark'].includes(theme)
+        ? theme : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    })();
+  </script>
   <link rel="stylesheet" href="./style.css">
 </head>
-
-<link rel="icon" type="image/png" href="./icone.png">
-
-<link
-    rel="apple-touch-icon"
-    href="./icon-192.png"
->
 <body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 3h14v18H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 14h14M7 3v14M11 7h4"/></symbol>
+      <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-14 4h3m4 0h3"/></symbol>
+      <symbol id="i-left" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+      <symbol id="i-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+      <symbol id="i-marker" viewBox="0 0 24 24"><path d="m14 3 7 7-9 9-7-7 9-9Zm-9 9-2 6 3 3 6-2M3 21h6"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Z"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.8 13a9 9 0 0 1-9.8-9.8A9 9 0 1 0 20.8 13Z"/></symbol>
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H4v16h5m6-13 5 5-5 5m-7-5h12"/></symbol>
+    </defs>
+  </svg>
 
-  <!-- LOGIN -->
-  <section id="telaLogin" class="login-screen">
-    <div class="login-card">
-      <div class="login-symbol">📒</div>
-      <span class="eyebrow">CADERNO ONLINE</span>
-      <h1>Meu Caderno</h1>
-      <p>Entre para acessar o mesmo caderno no celular e no computador.</p>
-
-      <form id="formLogin" class="login-form">
-        <label>
-          E-mail
-          <input id="emailLogin" type="email" autocomplete="email" placeholder="seu@email.com" required>
-        </label>
-
-        <label>
-          Senha
-          <input id="senhaLogin" type="password" autocomplete="current-password" placeholder="••••••••" minlength="6" required>
-        </label>
-
-        <button id="btnEntrar" type="submit">Entrar</button>
-      </form>
-
-      <p id="mensagemLogin" class="login-message"></p>
+  <section id="telaLogin" class="login-screen" aria-labelledby="loginTitulo">
+    <div class="login-story">
+      <a class="brand" href="./" aria-label="Caderno Online, início"><span class="brand-mark"><svg class="icon"><use href="#i-book"/></svg></span>Caderno Online</a>
+      <div class="login-intro"><span class="eyebrow">UM ESPAÇO SEU</span><h1>Um dia.<br>Uma nova página.</h1><p>Ideias, planos e pequenos avanços.<br>Guarde o que faz parte dos seus dias.</p><div class="paper-art" aria-hidden="true"><span></span><span></span><span></span></div></div>
+      <p class="login-caption">Mais espaço para pensar. Menos para se distrair.</p>
+    </div>
+    <div class="login-form-pane">
+      <button class="icon-button login-theme" type="button" data-theme-toggle aria-label="Alternar tema"><svg class="icon"><use href="#i-moon"/></svg></button>
+      <div class="login-card">
+        <span class="eyebrow">SEU CADERNO, SEMPRE COM VOCÊ</span>
+        <h2 id="loginTitulo">Que bom ter você aqui.</h2>
+        <p>Entre para continuar de onde parou.</p>
+        <form id="formLogin" class="login-form">
+          <label class="field" for="emailLogin">E-mail<input class="input" id="emailLogin" type="email" autocomplete="username" placeholder="voce@exemplo.com" required></label>
+          <label class="field" for="senhaLogin">Senha<input class="input" id="senhaLogin" type="password" autocomplete="current-password" placeholder="Sua senha" minlength="6" required></label>
+          <button id="btnEntrar" class="btn btn-primary" type="submit">Entrar no caderno<svg class="icon"><use href="#i-right"/></svg></button>
+          <p id="mensagemLogin" class="login-message" role="alert"></p>
+        </form>
+        <p class="login-footnote">Suas páginas, no celular e no computador.</p>
+      </div>
     </div>
   </section>
 
-  <!-- CADERNO -->
   <main id="aplicativo" class="app-shell" hidden>
-    <aside class="spiral" aria-hidden="true"></aside>
+    <a class="skip-link" href="#novoItem">Ir para a página do dia</a>
+    <aside id="sidebar" class="sidebar" aria-label="Navegação do caderno" tabindex="-1">
+      <header class="sidebar-brand"><span class="brand"><span class="brand-mark"><svg class="icon"><use href="#i-book"/></svg></span>Caderno Online</span><button class="icon-button" type="button" data-close-panel="sidebar" aria-label="Recolher navegação"><svg class="icon"><use href="#i-panel"/></svg></button></header>
+      <label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="buscaPaginas" type="search" placeholder="Buscar nas páginas" aria-label="Buscar nas páginas" autocomplete="off"></label>
+      <nav class="primary-nav" aria-label="Atalhos">
+        <button id="navHoje" class="nav-item" type="button"><svg class="icon"><use href="#i-calendar"/></svg><span>Hoje</span><span class="nav-count" id="contagemHoje">0</span></button>
+        <button id="novaAnotacao" class="nav-item" type="button"><svg class="icon"><use href="#i-plus"/></svg><span>Nova anotação</span></button>
+      </nav>
+      <div class="nav-section-heading"><h2 id="tituloPaginas">SUAS PÁGINAS</h2><span id="totalPaginas">0</span></div>
+      <nav id="listaPaginas" class="pages-nav" aria-labelledby="tituloPaginas"></nav>
+      <footer class="sidebar-footer">
+        <button class="nav-item" type="button" data-theme-toggle><svg class="icon"><use href="#i-moon"/></svg><span data-theme-label>Modo escuro</span></button>
+        <div class="account"><span class="avatar" id="avatarUsuario" aria-hidden="true">C</span><div><strong id="nomeUsuario">Meu caderno</strong><span id="emailUsuario"></span></div><button id="btnSair" class="icon-button" type="button" aria-label="Sair da conta" data-tooltip="Sair"><svg class="icon"><use href="#i-logout"/></svg></button></div>
+      </footer>
+    </aside>
 
-    <section class="notebook">
-      <header class="topbar">
-        <div>
-          <span class="eyebrow">CADERNO DIÁRIO</span>
-          <h1>Meu Caderno</h1>
-        </div>
-
-        <div class="topbar-controls">
-          <label class="date-picker-wrap">
-            <span>Data</span>
-            <input type="date" id="dataSelecionada">
-          </label>
-
-          <button id="btnSair" class="logout-btn" type="button" title="Sair">Sair</button>
-        </div>
+    <section id="workspace" class="workspace" aria-label="Página do caderno">
+      <header class="note-topbar">
+        <button id="sidebarToggle" class="icon-button" type="button" aria-label="Alternar navegação" aria-expanded="true" aria-controls="sidebar" data-tooltip="Navegação"><svg class="icon"><use href="#i-panel"/></svg></button>
+        <span class="breadcrumb">Meu caderno<span aria-hidden="true">/</span><strong id="dataTopbar">Hoje</strong></span>
+        <div class="topbar-actions"><span id="statusSalvamento" class="save-status" role="status" aria-live="polite" data-state="loading">Sincronizando…</span><button id="agendaToggle" class="icon-button" type="button" aria-label="Alternar calendário" aria-expanded="true" aria-controls="agenda" data-tooltip="Calendário"><svg class="icon"><use href="#i-calendar"/></svg></button></div>
       </header>
-
-      <section class="composer">
-        <input
-          id="novoItem"
-          type="text"
-          maxlength="140"
-          placeholder="O que você está tratando hoje?"
-          autocomplete="off"
-        >
-        <button id="btnAdicionar" type="button">Adicionar</button>
-      </section>
-
-      <section class="marker-bar" aria-label="Cor do marca-texto">
-        <div>
-          <span class="marker-label">Marca-texto</span>
-          <strong id="corSelecionadaTexto">Rosa</strong>
-        </div>
-
-        <div class="marker-colors" id="markerColors">
-          <button class="marker-color active" type="button" data-color="#f3a7d8" data-name="Rosa" style="--marker:#f3a7d8" aria-label="Rosa"></button>
-          <button class="marker-color" type="button" data-color="#fff08c" data-name="Amarelo" style="--marker:#fff08c" aria-label="Amarelo"></button>
-          <button class="marker-color" type="button" data-color="#a9e6b5" data-name="Verde" style="--marker:#a9e6b5" aria-label="Verde"></button>
-          <button class="marker-color" type="button" data-color="#9fd8ff" data-name="Azul" style="--marker:#9fd8ff" aria-label="Azul"></button>
-          <button class="marker-color" type="button" data-color="#c9b4ff" data-name="Lilás" style="--marker:#c9b4ff" aria-label="Lilás"></button>
-          <button class="marker-color" type="button" data-color="#ffc59b" data-name="Laranja" style="--marker:#ffc59b" aria-label="Laranja"></button>
-        </div>
-      </section>
-
-      <section class="page-heading">
-        <div>
-          <span class="date-small" id="dataExtenso"></span>
-          <h2 id="tituloData"></h2>
-        </div>
-        <span class="counter" id="contadorItens">0 itens</span>
-      </section>
-
-      <section id="listaItens" class="paper-lines" aria-live="polite"></section>
+      <div class="date-navigation" aria-label="Navegar entre páginas"><span id="paginaContexto">Uma página para cada dia</span><div><button id="diaAnterior" class="icon-button" type="button" aria-label="Dia anterior" data-tooltip="Dia anterior"><svg class="icon"><use href="#i-left"/></svg></button><button id="irHoje" class="btn btn-ghost" type="button">Hoje</button><button id="proximoDia" class="icon-button" type="button" aria-label="Próximo dia" data-tooltip="Próximo dia"><svg class="icon"><use href="#i-right"/></svg></button></div></div>
+      <div class="paper-stage">
+        <article id="pagina" class="journal-page" aria-labelledby="tituloData">
+          <header class="page-heading"><div class="date-kicker"><span id="dataExtenso"></span><span id="anoData"></span></div><h1 id="tituloData"></h1><p id="subtituloPagina">O que vale guardar deste dia?</p></header>
+          <div class="page-toolbar"><span class="section-label">ANOTAÇÕES<span id="contadorItens">0 itens</span></span><button id="abrirPaleta" class="btn btn-ghost marker-trigger" type="button" aria-expanded="false" aria-controls="paleta" aria-haspopup="dialog"><svg class="icon"><use href="#i-marker"/></svg><span>Marca-texto</span><span id="amostraCor" class="color-preview"></span></button></div>
+          <section id="listaItens" class="notes-list" aria-label="Anotações do dia" aria-busy="true"></section>
+          <form id="formAnotacao" class="composer">
+            <span class="composer-plus" aria-hidden="true"><svg class="icon"><use href="#i-plus"/></svg></span>
+            <label class="sr-only" for="novoItem">Nova anotação para o dia selecionado</label>
+            <textarea id="novoItem" rows="2" maxlength="140" placeholder="Escreva uma ideia, um plano, um lembrete…" aria-describedby="dicaAnotacao"></textarea>
+            <div class="composer-footer"><span id="dicaAnotacao">Enter para adicionar · Shift + Enter para nova linha</span><button id="btnAdicionar" class="btn btn-primary" type="submit" disabled>Adicionar<svg class="icon"><use href="#i-plus"/></svg></button></div>
+          </form>
+          <footer class="page-footer"><span class="page-rule"></span><svg class="icon"><use href="#i-book"/></svg><span id="numeroPagina"></span></footer>
+        </article>
+      </div>
     </section>
+
+    <aside id="agenda" class="agenda-panel" aria-label="Calendário e resumo do dia" tabindex="-1">
+      <header class="panel-heading"><h2>Seu dia, em perspectiva</h2><button class="icon-button" type="button" data-close-panel="agenda" aria-label="Recolher calendário"><svg class="icon"><use href="#i-close"/></svg></button></header>
+      <section class="calendar" aria-label="Calendário de páginas">
+        <div class="cal-toolbar"><h3 id="mesCalendario" aria-live="polite"></h3><div><button id="mesAnterior" class="icon-button" type="button" aria-label="Mês anterior"><svg class="icon"><use href="#i-left"/></svg></button><button id="proximoMes" class="icon-button" type="button" aria-label="Próximo mês"><svg class="icon"><use href="#i-right"/></svg></button></div></div>
+        <div class="cal-weekdays" aria-hidden="true"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+        <div id="calendario" class="cal-grid" role="group" aria-labelledby="mesCalendario"></div>
+        <p class="calendar-legend"><span></span>Dia com anotações</p>
+        <label class="date-picker-wrap" for="dataSelecionada">Ir para uma data<input class="input" type="date" id="dataSelecionada" min="0001-01-01" max="9999-12-31"></label>
+      </section>
+      <section class="day-summary" aria-labelledby="resumoTitulo"><h3 id="resumoTitulo">RESUMO DA PÁGINA</h3><div class="summary-numbers"><div><strong id="totalDia">0</strong><span>anotações</span></div><div><strong id="concluidosDia">0</strong><span>concluídas</span></div></div><div class="progress-track" role="progressbar" id="progressoDia" aria-label="Anotações concluídas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><p id="resumoTexto">Seu dia começa com uma anotação.</p></section>
+      <div class="context-note"><svg class="icon"><use href="#i-marker"/></svg><p>Um pouco de cor para o que importa.<span>Selecione um trecho e abra o marca-texto para destacá-lo.</span></p></div>
+    </aside>
+    <button id="panelBackdrop" class="panel-backdrop" type="button" aria-label="Fechar painel" hidden></button>
   </main>
 
-  <div id="toast" class="toast" hidden></div>
-
+  <section id="paleta" class="marker-palette" role="dialog" aria-labelledby="tituloPaleta" hidden>
+    <header><div><strong id="tituloPaleta">Marca-texto</strong><span id="corSelecionadaTexto">Rosa</span></div><button id="fecharPaleta" class="icon-button" type="button" aria-label="Fechar paleta"><svg class="icon"><use href="#i-close"/></svg></button></header>
+    <div id="markerColors" class="marker-colors" role="group" aria-label="Cores de marca-texto"></div>
+    <p id="dicaPaleta">Escolha a cor para suas próximas marcações.</p>
+    <button id="removerGrifo" class="btn btn-ghost remove-highlight" type="button" disabled>Remover marca-texto</button>
+  </section>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript>Ative o JavaScript no navegador para acessar o seu caderno.</noscript>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

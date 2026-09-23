@@ -1,430 +1,527 @@
-/* =====================================================
-   CADERNO ONLINE - FIREBASE
-===================================================== */
-
 import {
-  auth,
-  db,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  collection,
-  doc,
-  setDoc,
-  deleteDoc,
-  onSnapshot
+  auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+  collection, doc, setDoc, deleteDoc, onSnapshot
 } from "./firebase.js";
-
-const STORAGE_KEY = "meu-caderno-diario-v1";
-const MIGRATION_KEY = "meu-caderno-diario-migrado-firebase-v1";
-
+const $ = id => document.getElementById(id);
+const icon = name => '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"/></svg>';
+const STORAGE_KEY = "meu-caderno-diario-v1", MIGRATION_KEY = "meu-caderno-diario-migrado-firebase-v1";
+const COLORS = [
+  ["Amarelo", "yellow"], ["Laranja", "orange"], ["Coral", "coral"], ["Vermelho", "red"],
+  ["Rosa", "pink"], ["Roxo", "purple"], ["Lilás", "lilac"], ["Azul", "blue"],
+  ["Azul claro", "sky"], ["Ciano", "cyan"], ["Verde", "green"], ["Verde limão", "lime"], ["Cinza", "gray"]
+].map(([name, token]) => ({ name, token, color: getComputedStyle(document.documentElement).getPropertyValue("--marker-" + token).trim() }));
 const state = {
-  usuario: null,
-  data: hojeISO(),
-  cor: "#f3a7d8",
-  corNome: "Rosa",
-  registros: {},
-  unsubscribe: null
+  usuario: null, data: hojeISO(), cor: COLORS[4].color, corNome: "Rosa",
+  registros: {}, unsubscribe: null, ready: false, pending: 0, error: false, cached: false,
+  session: 0, addPromise: null, drafts: new Map(), busyItems: new Set(), marking: new Set(),
+  editing: null, turning: false, selectedRange: null, paletteTarget: null, paletteAnchor: null,
+  month: hojeISO().slice(0, 7), drawer: null
 };
-
-/* =====================================================
-   ELEMENTOS
-===================================================== */
-
-const telaLogin = document.getElementById("telaLogin");
-const aplicativo = document.getElementById("aplicativo");
-const formLogin = document.getElementById("formLogin");
-const emailLogin = document.getElementById("emailLogin");
-const senhaLogin = document.getElementById("senhaLogin");
-const btnEntrar = document.getElementById("btnEntrar");
-const btnSair = document.getElementById("btnSair");
-const mensagemLogin = document.getElementById("mensagemLogin");
-
-const dataSelecionada = document.getElementById("dataSelecionada");
-const novoItem = document.getElementById("novoItem");
-const btnAdicionar = document.getElementById("btnAdicionar");
-const markerColors = document.getElementById("markerColors");
-const corSelecionadaTexto = document.getElementById("corSelecionadaTexto");
-const dataExtenso = document.getElementById("dataExtenso");
-const tituloData = document.getElementById("tituloData");
-const contadorItens = document.getElementById("contadorItens");
-const listaItens = document.getElementById("listaItens");
-const toast = document.getElementById("toast");
-
-/* =====================================================
-   DATAS E UTILIDADES
-===================================================== */
-
-function hojeISO() {
-  const agora = new Date();
-  const ano = agora.getFullYear();
-  const mes = String(agora.getMonth() + 1).padStart(2, "0");
-  const dia = String(agora.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const mobileSidebar = matchMedia("(max-width: 900px)");
+const floatingAgenda = matchMedia("(max-width: 1180px)");
+let editTimer, toastTimer, panelReturnFocus;
+let sidebarCollapsed = preference("caderno-sidebar") === "closed";
+let agendaCollapsed = preference("caderno-agenda") === "closed";
+function preference(key, value) {
+  try { if (value === undefined) return localStorage.getItem(key); localStorage.setItem(key, value); } catch {}
+  return null;
 }
-
+function hojeISO() { return dataISO(new Date()); }
+function dataISO(date) { return String(date.getFullYear()).padStart(4, "0") + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0"); }
 function isoParaData(iso) {
-  const [ano, mes, dia] = iso.split("-").map(Number);
-  return new Date(ano, mes - 1, dia);
+  const [year, month, day] = iso.split("-").map(Number), date = new Date(0);
+  date.setHours(12, 0, 0, 0); date.setFullYear(year, month - 1, day); return date;
 }
-
-function formatarDataBR(iso) {
-  return isoParaData(iso).toLocaleDateString("pt-BR");
+function dataValida(value) { return /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= "0001-01-01" && value <= "9999-12-31" && dataISO(isoParaData(value)) === value; }
+function moverData(iso, delta) { const date = isoParaData(iso); date.setDate(date.getDate() + delta); return dataISO(date); }
+function dataLonga(iso) { return isoParaData(iso).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
+function escaparHTML(value = "") { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
+function corValida(color) { return /^#[0-9a-f]{6}$/i.test(color || "") ? color : state.cor; }
+function gerarId() { return window.crypto?.randomUUID?.() || Date.now() + "-" + Math.random().toString(16).slice(2); }
+function itensDoDia() { return state.registros[state.data] || []; }
+function encontrarItem(id) { return Object.values(state.registros).flat().find(item => item.id === id); }
+function mostrarToast(message, type = "") {
+  clearTimeout(toastTimer); $("toast").textContent = message; $("toast").className = "toast " + type; $("toast").hidden = false;
+  toastTimer = setTimeout(() => { $("toast").hidden = true; }, type === "erro" ? 6000 : 2800);
 }
-
-function formatarDataLonga(iso) {
-  return isoParaData(iso).toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  });
+function atualizarStatus() {
+  let text = "Salvo", status = "saved";
+  if (state.error) { text = "Falha ao salvar"; status = "error"; }
+  else if (!navigator.onLine) { text = state.pending ? "Salvamento pendente" : "Sem conexão"; status = "offline"; }
+  else if (state.pending) { text = "Salvando…"; status = "saving"; }
+  else if (state.editing && state.editing.value.trim() !== state.editing.savedText) { text = "Editando…"; status = "saving"; }
+  else if (!state.ready) { text = "Sincronizando…"; status = "loading"; }
+  else if (state.cached) { text = "Conectando…"; status = "loading"; }
+  $("statusSalvamento").textContent = text; $("statusSalvamento").dataset.state = status;
+  $("btnAdicionar").disabled = !state.ready || !!state.addPromise || !state.usuario || !$("novoItem").value.trim();
+  $("listaItens").setAttribute("aria-busy", String(!state.ready));
 }
-
-function gerarId() {
-  return window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+/* Firebase configuration, collection paths and legacy fields remain unchanged. */
+function referenciaItem(id, uid = state.usuario?.uid) { if (!uid) throw new Error("Sessão encerrada."); return doc(db, "users", uid, "caderno", id); }
+async function gravar(operation) {
+  const session = state.session; state.pending++; state.error = false; atualizarStatus();
+  try { return await operation(); }
+  catch (error) {
+    if (session === state.session) { state.error = true; mostrarToast("Não foi possível salvar. Seu texto foi mantido; tente novamente.", "erro"); }
+    throw error;
+  } finally { if (session === state.session) { state.pending = Math.max(0, state.pending - 1); atualizarStatus(); } }
 }
-
-function escaparHTML(valor = "") {
-  return String(valor)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function mostrarToast(mensagem, tipo = "sucesso") {
-  toast.textContent = mensagem;
-  toast.className = `toast ${tipo}`;
-  toast.hidden = false;
-  clearTimeout(mostrarToast.timer);
-  mostrarToast.timer = setTimeout(() => {
-    toast.hidden = true;
-  }, 1900);
-}
-
-function itensDoDia() {
-  return state.registros[state.data] || [];
-}
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-formLogin.addEventListener("submit", async event => {
-  event.preventDefault();
-  mensagemLogin.textContent = "";
-  btnEntrar.disabled = true;
-  btnEntrar.textContent = "Entrando...";
-
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      emailLogin.value.trim(),
-      senhaLogin.value
-    );
-  } catch (erro) {
-    console.error("Erro no login:", erro);
-
-    if (erro.code === "auth/invalid-credential") {
-      mensagemLogin.textContent = "E-mail ou senha incorretos.";
-    } else if (erro.code === "auth/too-many-requests") {
-      mensagemLogin.textContent = "Muitas tentativas. Aguarde um pouco e tente novamente.";
-    } else if (erro.code === "auth/network-request-failed") {
-      mensagemLogin.textContent = "Falha de conexão. Verifique sua internet.";
-    } else {
-      mensagemLogin.textContent = "Não foi possível entrar.";
-    }
-  } finally {
-    btnEntrar.disabled = false;
-    btnEntrar.textContent = "Entrar";
-  }
-});
-
-btnSair.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-  } catch (erro) {
-    console.error("Erro ao sair:", erro);
-  }
-});
-
-onAuthStateChanged(auth, async usuario => {
-  if (usuario) {
-    state.usuario = usuario;
-    telaLogin.hidden = true;
-    aplicativo.hidden = false;
-
-    await migrarLocalStorageParaFirebase();
-    iniciarSincronizacao();
-  } else {
-    pararSincronizacao();
-    state.usuario = null;
-    state.registros = {};
-    aplicativo.hidden = true;
-    telaLogin.hidden = false;
-    renderizar();
-  }
-});
-
-/* =====================================================
-   FIRESTORE
-===================================================== */
-
-function colecaoItens() {
-  return collection(db, "users", state.usuario.uid, "caderno");
-}
-
-function referenciaItem(id) {
-  return doc(db, "users", state.usuario.uid, "caderno", id);
-}
-
-function pararSincronizacao() {
-  if (state.unsubscribe) {
-    state.unsubscribe();
-    state.unsubscribe = null;
-  }
-}
-
-function iniciarSincronizacao() {
-  if (!state.usuario?.uid) return;
-
-  pararSincronizacao();
-
-  state.unsubscribe = onSnapshot(
-    colecaoItens(),
-    snapshot => {
-      const registros = {};
-
-      snapshot.docs.forEach(documento => {
-        const item = {
-          id: documento.id,
-          ...documento.data()
-        };
-
-        if (!item.data) return;
-
-        if (!registros[item.data]) {
-          registros[item.data] = [];
-        }
-
-        registros[item.data].push(item);
-      });
-
-      Object.values(registros).forEach(itens => {
-        itens.sort((a, b) => (a.criadoEm || 0) - (b.criadoEm || 0));
-      });
-
-      state.registros = registros;
-      renderizar();
-    },
-    erro => {
-      console.error("Erro ao sincronizar caderno:", erro);
-      mostrarToast("Erro ao sincronizar com o Firebase.", "erro");
-    }
-  );
-}
-
-async function salvarItem(item) {
-  if (!state.usuario?.uid) return;
-
-  await setDoc(
-    referenciaItem(item.id),
-    {
-      data: item.data,
-      texto: item.texto,
-      concluido: Boolean(item.concluido),
-      cor: item.cor || state.cor,
-      criadoEm: item.criadoEm || Date.now(),
-      atualizadoEm: Date.now()
-    },
-    { merge: true }
-  );
-}
-
-async function excluirItem(id) {
-  if (!state.usuario?.uid) return;
-  await deleteDoc(referenciaItem(id));
-}
-
-/* =====================================================
-   MIGRAÇÃO DO LOCALSTORAGE ANTIGO
-===================================================== */
-
-async function migrarLocalStorageParaFirebase() {
-  if (!state.usuario?.uid) return;
-  if (localStorage.getItem(MIGRATION_KEY) === "1") return;
-
-  let antigo = null;
-
-  try {
-    antigo = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-  } catch {
-    antigo = null;
-  }
-
-  if (!antigo || typeof antigo !== "object") {
-    localStorage.setItem(MIGRATION_KEY, "1");
-    return;
-  }
-
-  const operacoes = [];
-
-  Object.entries(antigo).forEach(([data, itens]) => {
-    if (!Array.isArray(itens)) return;
-
-    itens.forEach(item => {
-      const id = item.id || gerarId();
-
-      operacoes.push(
-        setDoc(
-          referenciaItem(id),
-          {
-            data,
-            texto: String(item.texto || ""),
-            concluido: Boolean(item.concluido),
-            cor: item.cor || "#f3a7d8",
-            criadoEm: item.criadoEm || Date.now(),
-            atualizadoEm: Date.now()
-          },
-          { merge: true }
-        )
-      );
-    });
-  });
-
-  try {
-    await Promise.all(operacoes);
-    localStorage.setItem(MIGRATION_KEY, "1");
-
-    if (operacoes.length > 0) {
-      mostrarToast("Anotações antigas importadas para o Firebase.");
-    }
-  } catch (erro) {
-    console.error("Erro na migração:", erro);
-  }
-}
-
-/* =====================================================
-   RENDERIZAÇÃO
-===================================================== */
-
-function renderizar() {
-  dataSelecionada.value = state.data;
-  dataExtenso.textContent = formatarDataLonga(state.data);
-  tituloData.textContent = formatarDataBR(state.data);
-
-  const itens = itensDoDia();
-  contadorItens.textContent = `${itens.length} ${itens.length === 1 ? "item" : "itens"}`;
-
-  if (!itens.length) {
-    listaItens.innerHTML = '<div class="empty-state">Comece escrevendo o primeiro assunto do dia.</div>';
-    return;
-  }
-
-  listaItens.innerHTML = itens.map(item => `
-    <article class="note-row ${item.concluido ? "done" : ""}" data-id="${item.id}" style="--highlight:${item.cor || state.cor}">
-      <div class="note-text">${escaparHTML(item.texto)}</div>
-      <div class="note-actions">
-        <button class="icon-btn done-btn" type="button" data-action="toggle" title="${item.concluido ? "Desmarcar" : "Finalizar e grifar"}">
-          ${item.concluido ? "↶" : "✓"}
-        </button>
-        <button class="icon-btn delete-btn" type="button" data-action="delete" title="Excluir">×</button>
-      </div>
-    </article>
-  `).join("");
-}
-
-/* =====================================================
-   AÇÕES DO CADERNO
-===================================================== */
-
-async function adicionarItem() {
-  const texto = novoItem.value.trim();
-  if (!texto || !state.usuario?.uid) return;
-
-  const item = {
-    id: gerarId(),
-    data: state.data,
-    texto,
-    concluido: false,
-    cor: state.cor,
-    criadoEm: Date.now()
+function salvarItem(item) {
+  const reference = referenciaItem(item.id), payload = {
+    data: item.data, texto: item.texto, concluido: Boolean(item.concluido),
+    cor: corValida(item.cor), criadoEm: item.criadoEm || Date.now(), atualizadoEm: Date.now()
   };
-
-  btnAdicionar.disabled = true;
-
+  // Optional substring ranges; no migration or replacement of legacy documents.
+  if (Array.isArray(item.grifos)) payload.grifos = normalizarGrifos(item.grifos, item.texto.length);
+  return gravar(() => setDoc(reference, payload, { merge: true }));
+}
+function pararSincronizacao() { state.unsubscribe?.(); state.unsubscribe = null; }
+function iniciarSincronizacao(session) {
+  pararSincronizacao();
+  state.unsubscribe = onSnapshot(collection(db, "users", state.usuario.uid, "caderno"), { includeMetadataChanges: true }, snapshot => {
+    if (session !== state.session) return;
+    const records = {};
+    snapshot.docs.forEach(documento => {
+      const item = { ...documento.data(), id: documento.id };
+      if (!dataValida(item.data)) return;
+      item.texto = String(item.texto || ""); (records[item.data] ||= []).push(item);
+    });
+    Object.values(records).forEach(items => items.sort((a, b) => (a.criadoEm || 0) - (b.criadoEm || 0)));
+    state.registros = records; state.ready = true; state.cached = Boolean(snapshot.metadata?.fromCache);
+    if (!state.turning) renderizar(); else { renderizarCalendario(); renderizarPaginas(); atualizarStatus(); }
+  }, () => {
+    if (session !== state.session) return;
+    state.error = true; $("statusSalvamento").textContent = "Falha na sincronização"; $("statusSalvamento").dataset.state = "error";
+    $("listaItens").setAttribute("aria-busy", "false");
+    mostrarToast("Não foi possível carregar o caderno. Verifique a conexão e entre novamente.", "erro");
+  });
+}
+async function migrarLocalStorageParaFirebase(uid) {
+  let old;
+  try { if (localStorage.getItem(MIGRATION_KEY) === "1") return; old = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch { return; }
+  if (!old || typeof old !== "object") { preference(MIGRATION_KEY, "1"); return; }
   try {
-    await salvarItem(item);
-    novoItem.value = "";
-    novoItem.focus();
-  } catch (erro) {
-    console.error("Erro ao adicionar item:", erro);
-    mostrarToast("Não foi possível salvar.", "erro");
-  } finally {
-    btnAdicionar.disabled = false;
+    const operations = [];
+    Object.entries(old).forEach(([date, items]) => {
+      if (!Array.isArray(items)) return;
+      items.forEach(item => operations.push(setDoc(referenciaItem(item.id || gerarId(), uid), {
+        data: date, texto: String(item.texto || ""), concluido: Boolean(item.concluido), cor: item.cor || "#f3a7d8",
+        criadoEm: item.criadoEm || Date.now(), atualizadoEm: Date.now()
+      }, { merge: true })));
+    });
+    await Promise.all(operations); preference(MIGRATION_KEY, "1");
+    if (operations.length && state.usuario?.uid === uid) mostrarToast("Anotações antigas importadas.");
+  } catch { if (state.usuario?.uid === uid) mostrarToast("Não foi possível importar as anotações antigas. Elas continuam neste navegador.", "erro"); }
+}
+$("formLogin").addEventListener("submit", async event => {
+  event.preventDefault(); if ($("btnEntrar").disabled) return;
+  $("btnEntrar").disabled = true; $("btnEntrar").textContent = "Entrando…"; $("mensagemLogin").textContent = "";
+  try { await signInWithEmailAndPassword(auth, $("emailLogin").value.trim(), $("senhaLogin").value); }
+  catch (error) {
+    const messages = { "auth/invalid-credential": "E-mail ou senha incorretos.", "auth/too-many-requests": "Muitas tentativas. Aguarde um pouco e tente novamente.", "auth/network-request-failed": "Falha de conexão. Verifique sua internet." };
+    $("mensagemLogin").textContent = messages[error.code] || "Não foi possível entrar. Tente novamente.";
+  } finally { $("btnEntrar").disabled = false; $("btnEntrar").innerHTML = "Entrar no caderno" + icon("right"); }
+});
+$("btnSair").addEventListener("click", async () => {
+  if ($("btnSair").disabled) return; $("btnSair").disabled = true;
+  try {
+    if (!await finalizarEdicao(true)) return;
+    if (state.addPromise && !await state.addPromise) return;
+    if (state.pending) { mostrarToast("Aguarde o salvamento antes de sair."); return; }
+    await signOut(auth);
+  } catch { mostrarToast("Não foi possível sair. Tente novamente.", "erro"); }
+  finally { $("btnSair").disabled = false; }
+});
+onAuthStateChanged(auth, async usuario => {
+  const session = ++state.session;
+  pararSincronizacao(); clearTimeout(editTimer);
+  state.usuario = usuario; state.ready = false; state.registros = {}; state.pending = 0; state.error = false;
+  state.addPromise = null; state.editing = null; state.drafts.clear(); state.busyItems.clear(); state.marking.clear(); state.selectedRange = null;
+  $("novoItem").value = ""; $("buscaPaginas").value = ""; $("senhaLogin").value = "";
+  fecharPaleta(false); fecharPainel(false); $("telaLogin").hidden = !!usuario; $("aplicativo").hidden = !usuario;
+  renderizar();
+  if (!usuario) return;
+  const name = usuario.displayName || usuario.email?.split("@")[0] || "Meu caderno";
+  $("nomeUsuario").textContent = name; $("emailUsuario").textContent = usuario.email || ""; $("avatarUsuario").textContent = name[0].toUpperCase();
+  await migrarLocalStorageParaFirebase(usuario.uid);
+  if (session === state.session) iniciarSincronizacao(session);
+});
+/* Each draft belongs to its date; an in-flight save never clears newer typing. */
+async function adicionarItem() {
+  const text = $("novoItem").value.trim();
+  if (!text || !state.usuario || !state.ready || state.addPromise) return false;
+  const day = state.data, originalInput = $("novoItem").value, session = state.session;
+  const item = { id: gerarId(), data: day, texto: text, concluido: false, cor: state.cor, criadoEm: Date.now() };
+  const operation = (async () => {
+    try {
+      await salvarItem(item);
+      if (session !== state.session) return false;
+      if (state.drafts.get(day) === originalInput) state.drafts.delete(day);
+      if (state.data === day && $("novoItem").value === originalInput) { $("novoItem").value = ""; if (!state.turning) $("novoItem").focus(); }
+      return true;
+    } catch { return false; }
+    finally { if (session === state.session) { state.addPromise = null; atualizarStatus(); } }
+  })();
+  state.addPromise = operation; atualizarStatus(); return operation;
+}
+$("formAnotacao").addEventListener("submit", event => { event.preventDefault(); adicionarItem(); });
+$("novoItem").addEventListener("input", () => { state.drafts.set(state.data, $("novoItem").value); atualizarStatus(); });
+$("novoItem").addEventListener("keydown", event => { if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); adicionarItem(); } });
+function normalizarGrifos(highlights, length) {
+  if (!Array.isArray(highlights)) return [];
+  return highlights.filter(range => Number.isInteger(range.inicio) && Number.isInteger(range.fim))
+    .map(range => ({ inicio: Math.max(0, range.inicio), fim: Math.min(length, range.fim), cor: corValida(range.cor) }))
+    .filter(range => range.fim > range.inicio).sort((a, b) => a.inicio - b.inicio);
+}
+function aplicarTrecho(highlights, start, end, color) {
+  const result = [];
+  highlights.forEach(range => {
+    if (range.fim <= start || range.inicio >= end) result.push(range);
+    else { if (range.inicio < start) result.push({ ...range, fim: start }); if (range.fim > end) result.push({ ...range, inicio: end }); }
+  });
+  if (color) result.push({ inicio: start, fim: end, cor: color });
+  return result.sort((a, b) => a.inicio - b.inicio);
+}
+function ajustarGrifos(before, after, highlights) {
+  let prefix = 0, suffix = 0;
+  while (prefix < before.length && prefix < after.length && before[prefix] === after[prefix]) prefix++;
+  while (suffix < before.length - prefix && suffix < after.length - prefix && before[before.length - 1 - suffix] === after[after.length - 1 - suffix]) suffix++;
+  const oldEnd = before.length - suffix, newEnd = after.length - suffix, delta = after.length - before.length;
+  return normalizarGrifos(highlights.map(range => ({
+    ...range, inicio: range.inicio <= prefix ? range.inicio : range.inicio >= oldEnd ? range.inicio + delta : prefix,
+    fim: range.fim <= prefix ? range.fim : range.fim >= oldEnd ? range.fim + delta : newEnd
+  })), after.length);
+}
+function textoComGrifos(item) {
+  let result = "", offset = 0;
+  normalizarGrifos(item.grifos, item.texto.length).forEach(range => {
+    const start = Math.max(offset, range.inicio); if (range.fim <= start) return;
+    result += escaparHTML(item.texto.slice(offset, start)) + '<mark style="--highlight:' + range.cor + '">' + escaparHTML(item.texto.slice(start, range.fim)) + "</mark>"; offset = range.fim;
+  });
+  return result + escaparHTML(item.texto.slice(offset));
+}
+function renderizarItens() {
+  const list = $("listaItens"), items = itensDoDia();
+  if (!items.length && !state.editing) {
+    list.innerHTML = state.ready ? '<div class="empty-state"><strong>Uma página em branco. Muitas possibilidades.</strong>Comece com o que está na sua cabeça.</div>' : '<div class="loading-state" aria-label="Carregando anotações"><span class="loading-line"></span><span class="loading-line"></span></div>';
+    return;
   }
+  list.querySelectorAll(".empty-state, .loading-state").forEach(node => node.remove());
+  const ids = new Set(items.map(item => item.id));
+  list.querySelectorAll(".note-row").forEach(row => { if (!ids.has(row.dataset.id) && state.editing?.id !== row.dataset.id) row.remove(); });
+  items.forEach((item, index) => {
+    let row = [...list.children].find(node => node.dataset.id === item.id);
+    if (!row) { row = document.createElement("article"); row.dataset.id = item.id; row.className = "note-row"; }
+    const signature = JSON.stringify([item.texto, item.concluido, item.cor, item.grifos]);
+    if (state.editing?.id !== item.id && row.dataset.signature !== signature) {
+      row.dataset.signature = signature; row.className = "note-row" + (item.concluido ? " done" : "");
+      row.style.setProperty("--highlight", corValida(item.cor));
+      row.innerHTML = '<button class="note-check" type="button" data-action="toggle" aria-label="' + (item.concluido ? "Desmarcar anotação" : "Concluir e grifar anotação") + '" aria-pressed="' + Boolean(item.concluido) + '">' + icon("check") + '</button><div class="note-body"><span class="note-text">' + textoComGrifos(item) + '</span></div><div class="note-actions"><button class="icon-button" type="button" data-action="edit" aria-label="Editar anotação" data-tooltip="Editar">' + icon("edit") + '</button><button class="icon-button" type="button" data-action="mark" aria-label="Cor da anotação" data-tooltip="Grifar">' + icon("marker") + '</button><button class="icon-button" type="button" data-action="delete" aria-label="Excluir anotação" data-tooltip="Excluir">' + icon("trash") + "</button></div>";
+      if (state.marking.delete(item.id)) row.classList.add("is-marking");
+    }
+    row.querySelectorAll("[data-action]").forEach(button => { button.disabled = state.busyItems.has(item.id); });
+    if (list.children[index] !== row) list.insertBefore(row, list.children[index] || null);
+  });
+}
+$("listaItens").addEventListener("animationend", event => { if (event.animationName === "marker-stroke") event.target.closest(".note-row")?.classList.remove("is-marking"); });
+$("listaItens").addEventListener("click", async event => {
+  const button = event.target.closest("[data-action]"), row = button?.closest("[data-id]");
+  if (!button || !row || state.busyItems.has(row.dataset.id)) return;
+  let item = encontrarItem(row.dataset.id); if (!item) return;
+  const action = button.dataset.action;
+  if (action === "edit") { await iniciarEdicao(item); return; }
+  if (action === "finish-edit") { await finalizarEdicao(true); return; }
+  if (action === "mark") { abrirPaleta(button, { id: item.id, whole: true }); return; }
+  if (!await finalizarEdicao(true)) return;
+  item = encontrarItem(item.id); if (!item) return;
+  state.busyItems.add(item.id); renderizarItens();
+  try {
+    if (action === "toggle") {
+      if (!item.concluido) state.marking.add(item.id);
+      await salvarItem({ ...item, concluido: !item.concluido, cor: !item.concluido ? state.cor : item.cor });
+    } else if (action === "delete") { const reference = referenciaItem(item.id); await gravar(() => deleteDoc(reference)); mostrarToast("Anotação excluída."); }
+  } catch { state.marking.delete(item.id); }
+  finally { state.busyItems.delete(item.id); renderizar(); }
+});
+async function iniciarEdicao(item) {
+  if (state.editing?.id === item.id || !await finalizarEdicao(true)) return;
+  const row = [...$("listaItens").children].find(node => node.dataset.id === item.id); if (!row) return;
+  state.editing = { id: item.id, value: item.texto, savedText: item.texto, grifos: item.grifos || [], inFlight: null, session: state.session };
+  row.classList.add("is-editing");
+  row.querySelector(".note-body").innerHTML = '<label class="sr-only" for="editarItem">Editar anotação</label><textarea id="editarItem" class="inline-editor" maxlength="140" rows="3"></textarea><div class="editing-footer"><span>As alterações são salvas automaticamente.</span><button type="button" class="btn btn-ghost" data-action="finish-edit">Concluir</button></div>';
+  $("editarItem").value = item.texto; $("editarItem").focus(); $("editarItem").setSelectionRange(item.texto.length, item.texto.length);
+  $("editarItem").addEventListener("input", event => {
+    if (!state.editing) return;
+    state.editing.value = event.target.value; clearTimeout(editTimer);
+    editTimer = setTimeout(() => finalizarEdicao(false), 650); atualizarStatus();
+  });
+  $("editarItem").addEventListener("keydown", event => {
+    if ((event.key === "Enter" && !event.shiftKey && !event.isComposing) || event.key === "Escape") { event.preventDefault(); finalizarEdicao(true); }
+  });
+}
+async function finalizarEdicao(close) {
+  clearTimeout(editTimer);
+  const editing = state.editing; if (!editing) return true;
+  if (editing.inFlight) { const ok = await editing.inFlight; if (!ok) return false; return finalizarEdicao(close); }
+  const text = editing.value.trim();
+  if (!text) { if (close) mostrarToast("Escreva algo antes de concluir a edição.", "erro"); return false; }
+  if (text !== editing.savedText) {
+    const current = encontrarItem(editing.id);
+    if (!current) { mostrarToast("Esta anotação foi excluída em outro dispositivo. Copie seu texto antes de sair.", "erro"); return false; }
+    const highlights = ajustarGrifos(editing.savedText, text, normalizarGrifos(editing.grifos, editing.savedText.length));
+    editing.inFlight = (async () => {
+      try {
+        const updated = { ...current, texto: text }; if (Array.isArray(current.grifos)) updated.grifos = highlights;
+        await salvarItem(updated); editing.savedText = text; editing.grifos = highlights; return true;
+      } catch { return false; }
+      finally { editing.inFlight = null; atualizarStatus(); }
+    })();
+    if (!await editing.inFlight || editing.session !== state.session) return false;
+    if (editing.value.trim() !== editing.savedText) return finalizarEdicao(close);
+  }
+  if (close && state.editing === editing) {
+    state.editing = null;
+    const row = [...$("listaItens").children].find(node => node.dataset.id === editing.id);
+    if (row) row.dataset.signature = ""; renderizarItens(); row?.querySelector('[data-action="edit"]')?.focus();
+  }
+  atualizarStatus(); return true;
 }
 
-dataSelecionada.addEventListener("change", () => {
-  if (!dataSelecionada.value) return;
-  state.data = dataSelecionada.value;
-  renderizar();
-});
-
-btnAdicionar.addEventListener("click", adicionarItem);
-
-novoItem.addEventListener("keydown", event => {
-  if (event.key === "Enter") adicionarItem();
-});
-
-markerColors.addEventListener("click", event => {
-  const botao = event.target.closest("[data-color]");
-  if (!botao) return;
-
-  state.cor = botao.dataset.color;
-  state.corNome = botao.dataset.name;
-  corSelecionadaTexto.textContent = state.corNome;
-
-  markerColors.querySelectorAll(".marker-color").forEach(item => item.classList.remove("active"));
-  botao.classList.add("active");
-});
-
-listaItens.addEventListener("click", async event => {
-  const linha = event.target.closest("[data-id]");
-  const acao = event.target.closest("[data-action]");
-  if (!linha || !acao) return;
-
-  const itens = itensDoDia();
-  const item = itens.find(registro => registro.id === linha.dataset.id);
-  if (!item) return;
-
-  if (acao.dataset.action === "toggle") {
-    const atualizado = {
-      ...item,
-      concluido: !item.concluido,
-      cor: !item.concluido ? state.cor : (item.cor || state.cor)
-    };
-
-    try {
-      await salvarItem(atualizado);
-      mostrarToast(atualizado.concluido ? "Finalizado e grifado." : "Marca removida.");
-    } catch (erro) {
-      console.error("Erro ao atualizar item:", erro);
-      mostrarToast("Não foi possível atualizar.", "erro");
-    }
+/* Flush editing before turning the sheet. The document identity never depends on the animation. */
+async function navegarPara(day) {
+  if (!dataValida(day) || state.turning) return false;
+  if (day === state.data) { fecharPainel(); return true; }
+  // Reserve the transition before awaiting writes, so repeated clicks cannot race.
+  state.turning = true;
+  if (!await finalizarEdicao(true)) { state.turning = false; return false; }
+  if (state.addPromise && !await state.addPromise) { state.turning = false; return false; }
+  const session = state.session, forward = day > state.data, page = $("pagina");
+  state.drafts.set(state.data, $("novoItem").value);
+  fecharPaleta(false); fecharPainel(false); state.selectedRange = null;
+  page.inert = true; page.classList.add("turning"); page.classList.toggle("turning-back", !forward);
+  [$("diaAnterior"), $("proximoDia"), $("irHoje")].forEach(button => { button.disabled = true; });
+  try {
+    const short = reducedMotion.matches, duration = short ? 40 : 220;
+    await page.animate(short ? [{ opacity: 1 }, { opacity: .25 }] : [
+      { transform: "rotateY(0deg)", opacity: 1 },
+      { transform: "rotateY(" + (forward ? -58 : 58) + "deg)", opacity: .12 }
+    ], { duration, easing: "cubic-bezier(.2,.65,.25,1)", fill: "forwards" }).finished;
+    if (session !== state.session) return false;
+    state.data = day; state.month = day.slice(0, 7);
+    $("novoItem").value = state.drafts.get(day) || ""; renderizar();
+    page.getAnimations().forEach(animation => animation.cancel());
+    await page.animate(short ? [{ opacity: .25 }, { opacity: 1 }] : [
+      { transform: "rotateY(" + (forward ? 28 : -28) + "deg)", opacity: .25 },
+      { transform: "rotateY(0deg)", opacity: 1 }
+    ], { duration, easing: "cubic-bezier(.2,.65,.25,1)" }).finished;
+    return true;
+  } catch (error) { if (error.name !== "AbortError") mostrarToast("A página foi atualizada sem animação."); return false; }
+  finally {
+    page.getAnimations().forEach(animation => animation.cancel());
+    page.classList.remove("turning", "turning-back"); page.inert = false; state.turning = false;
+    [$("diaAnterior"), $("proximoDia"), $("irHoje")].forEach(button => { button.disabled = false; }); renderizar();
   }
-
-  if (acao.dataset.action === "delete") {
-    try {
-      await excluirItem(item.id);
-      mostrarToast("Item excluído.");
-    } catch (erro) {
-      console.error("Erro ao excluir item:", erro);
-      mostrarToast("Não foi possível excluir.", "erro");
-    }
+}
+$("diaAnterior").addEventListener("click", () => navegarPara(moverData(state.data, -1)));
+$("proximoDia").addEventListener("click", () => navegarPara(moverData(state.data, 1)));
+$("irHoje").addEventListener("click", () => navegarPara(hojeISO()));
+$("navHoje").addEventListener("click", () => navegarPara(hojeISO()));
+$("novaAnotacao").addEventListener("click", () => { fecharPainel(false); $("novoItem").focus(); });
+$("dataSelecionada").addEventListener("change", async event => { await navegarPara(event.target.value); event.target.value = state.data; });
+function renderizar() {
+  const date = isoParaData(state.data), items = itensDoDia(), completed = items.filter(item => item.concluido).length;
+  $("dataSelecionada").value = state.data;
+  $("dataExtenso").textContent = date.toLocaleDateString("pt-BR", { weekday: "long" });
+  $("anoData").textContent = date.getFullYear();
+  $("tituloData").textContent = date.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
+  $("dataTopbar").textContent = state.data === hojeISO() ? "Hoje" : date.toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
+  $("contadorItens").textContent = items.length + (items.length === 1 ? " item" : " itens");
+  $("numeroPagina").textContent = date.toLocaleDateString("pt-BR");
+  $("totalDia").textContent = items.length; $("concluidosDia").textContent = completed;
+  const progress = items.length ? Math.round(completed / items.length * 100) : 0;
+  $("progressoDia").setAttribute("aria-valuenow", progress);
+  $("progressoDia").firstElementChild.style.transform = "scaleX(" + progress / 100 + ")";
+  $("resumoTexto").textContent = !items.length ? "Seu dia começa com uma anotação." : completed === items.length ? "Tudo concluído. Espaço para o próximo passo." : (items.length - completed) + " " + (items.length - completed === 1 ? "anotação em aberto." : "anotações em aberto.");
+  $("paginaContexto").textContent = state.data === hojeISO() ? "Uma página para o seu hoje" : "Cada dia tem sua própria história";
+  $("navHoje").classList.toggle("active", state.data === hojeISO());
+  $("navHoje").setAttribute("aria-current", state.data === hojeISO() ? "date" : "false");
+  renderizarItens(); renderizarPaginas(); renderizarCalendario(); atualizarStatus();
+}
+function renderizarPaginas() {
+  const query = $("buscaPaginas").value.trim().toLocaleLowerCase("pt-BR");
+  const dates = Object.keys(state.registros).filter(date => state.registros[date].length).sort().reverse();
+  $("totalPaginas").textContent = dates.length; $("contagemHoje").textContent = (state.registros[hojeISO()] || []).length;
+  const visible = dates.filter(date => !query || (date + " " + dataLonga(date) + " " + state.registros[date].map(item => item.texto).join(" ")).toLocaleLowerCase("pt-BR").includes(query));
+  $("listaPaginas").innerHTML = visible.length ? visible.map(date => {
+    const d = isoParaData(date), items = state.registros[date];
+    return '<button class="page-link' + (state.data === date ? " active" : "") + '" type="button" data-date="' + date + '" aria-current="' + (state.data === date ? "date" : "false") + '"><span class="page-day">' + String(d.getDate()).padStart(2, "0") + '</span><span><strong>' + escaparHTML(d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })) + "</strong><small>" + escaparHTML(items[0].texto) + "</small></span></button>";
+  }).join("") : '<p class="sidebar-empty">' + (query ? "Nenhuma página encontrada." : state.ready ? "Suas páginas aparecem aqui quando você começa a escrever." : "Carregando suas páginas…") + "</p>";
+}
+$("buscaPaginas").addEventListener("input", renderizarPaginas);
+$("listaPaginas").addEventListener("click", event => { const button = event.target.closest("[data-date]"); if (button) navegarPara(button.dataset.date); });
+function renderizarCalendario(focusDate) {
+  const previousFocus = document.activeElement?.closest("#calendario [data-date]")?.dataset.date;
+  const first = isoParaData(state.month + "-01"), start = moverData(dataISO(first), -first.getDay());
+  $("mesCalendario").textContent = first.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const selectedFocus = focusDate || previousFocus || (state.data.startsWith(state.month) ? state.data : dataISO(first));
+  let html = "";
+  for (let index = 0; index < 42; index++) {
+    const day = moverData(start, index), date = isoParaData(day), hasNote = Boolean(state.registros[day]?.length);
+    html += '<button type="button" class="cal-day' + (day.slice(0, 7) !== state.month ? " outside" : "") + (day === hojeISO() ? " today" : "") + (day === state.data ? " selected" : "") + '" data-date="' + day + '" tabindex="' + (day === selectedFocus ? "0" : "-1") + '" aria-label="' + escaparHTML(dataLonga(day) + (hasNote ? ", com anotações" : "")) + '" aria-pressed="' + (day === state.data) + '"' + (day === hojeISO() ? ' aria-current="date"' : "") + (!dataValida(day) ? " disabled" : "") + ">" + date.getDate() + (hasNote ? '<span class="cal-dot" aria-hidden="true"></span>' : "") + "</button>";
   }
+  $("calendario").innerHTML = html;
+  $("mesAnterior").disabled = state.month === "0001-01"; $("proximoMes").disabled = state.month === "9999-12";
+  if (previousFocus) $("calendario").querySelector('[data-date="' + selectedFocus + '"]')?.focus({ preventScroll: true });
+}
+function mudarMes(delta) {
+  const date = isoParaData(state.month + "-01"); date.setMonth(date.getMonth() + delta);
+  const iso = dataISO(date); if (!dataValida(iso)) return;
+  state.month = iso.slice(0, 7); renderizarCalendario();
+  if (!reducedMotion.matches) $("calendario").animate([{ opacity: .3, transform: "translateX(" + (delta > 0 ? 5 : -5) + "px)" }, { opacity: 1, transform: "translateX(0)" }], { duration: 150 });
+}
+$("mesAnterior").addEventListener("click", () => mudarMes(-1));
+$("proximoMes").addEventListener("click", () => mudarMes(1));
+$("calendario").addEventListener("click", event => { const day = event.target.closest("[data-date]"); if (day) navegarPara(day.dataset.date); });
+$("calendario").addEventListener("keydown", event => {
+  const button = event.target.closest("[data-date]"), deltas = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+  if (!button || !(event.key in deltas)) return;
+  event.preventDefault();
+  const day = moverData(button.dataset.date, deltas[event.key]); if (!dataValida(day)) return;
+  state.month = day.slice(0, 7); renderizarCalendario(day); $("calendario").querySelector('[data-date="' + day + '"]')?.focus();
 });
-
+/* Native selection is captured before moving focus to the palette. */
+function capturarSelecao() {
+  const selection = window.getSelection(); if (!selection?.rangeCount || selection.isCollapsed) return null;
+  const range = selection.getRangeAt(0), element = node => node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+  const start = element(range.startContainer)?.closest(".note-text"), end = element(range.endContainer)?.closest(".note-text");
+  if (!start || start !== end) return null;
+  const prefix = range.cloneRange(); prefix.selectNodeContents(start); prefix.setEnd(range.startContainer, range.startOffset);
+  return { id: start.closest("[data-id]").dataset.id, inicio: prefix.toString().length, fim: prefix.toString().length + range.toString().length };
+}
+document.addEventListener("selectionchange", () => {
+  if (!$("paleta").hidden) return;
+  state.selectedRange = capturarSelecao(); $("abrirPaleta").querySelector("span").textContent = state.selectedRange ? "Grifar seleção" : "Marca-texto";
+});
+$("markerColors").innerHTML = COLORS.map(color => '<button type="button" class="marker-color" data-color="' + color.color + '" data-name="' + color.name + '" style="--marker:var(--marker-' + color.token + ')" aria-label="' + color.name + '" data-tooltip="' + color.name + '" aria-pressed="' + (color.name === state.corNome) + '"></button>').join("");
+function posicionarPaleta() {
+  if ($("paleta").hidden) return;
+  const anchor = state.paletteAnchor?.isConnected ? state.paletteAnchor : $("abrirPaleta");
+  const bounds = anchor.getBoundingClientRect(), palette = $("paleta"), viewport = window.visualViewport;
+  const width = viewport?.width || innerWidth, height = viewport?.height || innerHeight;
+  palette.style.left = Math.max(12, Math.min(bounds.right - palette.offsetWidth, width - palette.offsetWidth - 12)) + "px";
+  palette.style.top = (bounds.bottom + palette.offsetHeight + 12 < height ? bounds.bottom + 8 : Math.max(12, bounds.top - palette.offsetHeight - 8)) + "px";
+}
+function abrirPaleta(anchor, target) {
+  state.paletteTarget = target || state.selectedRange; state.paletteAnchor = anchor;
+  $("paleta").hidden = false; $("abrirPaleta").setAttribute("aria-expanded", "true");
+  $("dicaPaleta").textContent = state.paletteTarget ? (state.paletteTarget.whole ? "Aplique uma cor à anotação inteira." : "A cor será aplicada ao trecho selecionado.") : "Escolha a cor para suas próximas marcações.";
+  $("removerGrifo").disabled = !state.paletteTarget; posicionarPaleta(); $("markerColors").querySelector('[aria-pressed="true"]')?.focus();
+}
+function fecharPaleta(restoreFocus = true) {
+  const wasOpen = !$("paleta").hidden; $("paleta").hidden = true; $("abrirPaleta").setAttribute("aria-expanded", "false");
+  if (restoreFocus && wasOpen) (state.paletteAnchor?.isConnected ? state.paletteAnchor : $("abrirPaleta")).focus();
+  state.paletteTarget = null;
+}
+$("abrirPaleta").addEventListener("pointerdown", event => { if (event.pointerType === "mouse") event.preventDefault(); });
+$("abrirPaleta").addEventListener("click", () => { if ($("paleta").hidden) abrirPaleta($("abrirPaleta")); else fecharPaleta(); });
+$("fecharPaleta").addEventListener("click", () => fecharPaleta());
+async function aplicarMarca(color) {
+  const target = state.paletteTarget; if (!target) return;
+  if (!await finalizarEdicao(true)) return;
+  const item = encontrarItem(target.id); if (!item || state.busyItems.has(item.id)) return;
+  state.busyItems.add(item.id); if (color) state.marking.add(item.id);
+  try {
+    const updated = target.whole ? { ...item, concluido: !!color, cor: color || item.cor, ...(color ? {} : { grifos: [] }) }
+      : { ...item, grifos: aplicarTrecho(normalizarGrifos(item.grifos, item.texto.length), target.inicio, target.fim, color) };
+    await salvarItem(updated); state.selectedRange = null; window.getSelection()?.removeAllRanges(); fecharPaleta();
+  } catch { state.marking.delete(item.id); }
+  finally { state.busyItems.delete(item.id); renderizar(); }
+}
+$("markerColors").addEventListener("click", event => {
+  const button = event.target.closest("[data-color]"); if (!button) return;
+  state.cor = button.dataset.color; state.corNome = button.dataset.name; $("corSelecionadaTexto").textContent = state.corNome;
+  $("amostraCor").style.background = state.cor;
+  $("markerColors").querySelectorAll("[data-color]").forEach(node => node.setAttribute("aria-pressed", String(node === button)));
+  aplicarMarca(state.cor);
+});
+$("removerGrifo").addEventListener("click", () => aplicarMarca(null));
+document.addEventListener("pointerdown", event => { if (!$("paleta").hidden && !event.target.closest("#paleta, #abrirPaleta, [data-action='mark']")) fecharPaleta(false); });
+$("paleta").addEventListener("keydown", event => {
+  const colors = [...$("markerColors").children], index = colors.indexOf(document.activeElement), movement = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 7, ArrowUp: -7 };
+  if (index >= 0 && event.key in movement) { event.preventDefault(); colors[(index + movement[event.key] + colors.length) % colors.length].focus(); }
+});
+$("workspace").addEventListener("scroll", () => { if (!$("paleta").hidden) posicionarPaleta(); }, { passive: true });
+/* Off-canvas panels use focus containment and inert backgrounds. */
+function atualizarPaineis() {
+  const app = $("aplicativo");
+  app.classList.toggle("sidebar-collapsed", sidebarCollapsed); app.classList.toggle("agenda-collapsed", agendaCollapsed);
+  app.classList.toggle("sidebar-open", state.drawer === "sidebar"); app.classList.toggle("agenda-open", state.drawer === "agenda");
+  const sidebarVisible = mobileSidebar.matches ? state.drawer === "sidebar" : !sidebarCollapsed;
+  const agendaVisible = floatingAgenda.matches ? state.drawer === "agenda" : !agendaCollapsed;
+  $("sidebar").inert = !sidebarVisible || !!(state.drawer && state.drawer !== "sidebar");
+  $("agenda").inert = !agendaVisible || !!(state.drawer && state.drawer !== "agenda");
+  $("sidebar").setAttribute("aria-hidden", String(!sidebarVisible)); $("agenda").setAttribute("aria-hidden", String(!agendaVisible));
+  $("sidebarToggle").setAttribute("aria-expanded", String(sidebarVisible)); $("agendaToggle").setAttribute("aria-expanded", String(agendaVisible));
+  $("panelBackdrop").hidden = !state.drawer; $("workspace").inert = !!state.drawer;
+  for (const panel of ["sidebar", "agenda"]) {
+    if (state.drawer === panel) { $(panel).setAttribute("role", "dialog"); $(panel).setAttribute("aria-modal", "true"); }
+    else { $(panel).removeAttribute("role"); $(panel).removeAttribute("aria-modal"); }
+  }
+}
+function fecharPainel(restoreFocus = true) { const open = !!state.drawer; state.drawer = null; atualizarPaineis(); if (open && restoreFocus) panelReturnFocus?.focus(); }
+function alternarPainel(panel) {
+  fecharPaleta(false);
+  const floating = panel === "sidebar" ? mobileSidebar.matches : floatingAgenda.matches;
+  if (floating) {
+    if (state.drawer === panel) { fecharPainel(); return; }
+    panelReturnFocus = document.activeElement; state.drawer = panel; atualizarPaineis(); $(panel).querySelector("button, input")?.focus();
+  } else {
+    if (panel === "sidebar") { sidebarCollapsed = !sidebarCollapsed; preference("caderno-sidebar", sidebarCollapsed ? "closed" : "open"); }
+    else { agendaCollapsed = !agendaCollapsed; preference("caderno-agenda", agendaCollapsed ? "closed" : "open"); }
+    atualizarPaineis();
+    if (!reducedMotion.matches) $("workspace").animate([{ opacity: .75, transform: "translateX(" + (panel === "sidebar" ? 5 : -5) + "px)" }, { opacity: 1, transform: "translateX(0)" }], { duration: 200 });
+  }
+}
+$("sidebarToggle").addEventListener("click", () => alternarPainel("sidebar"));
+$("agendaToggle").addEventListener("click", () => alternarPainel("agenda"));
+document.querySelectorAll("[data-close-panel]").forEach(button => button.addEventListener("click", () => {
+  if (state.drawer) fecharPainel(); else { alternarPainel(button.dataset.closePanel); $(button.dataset.closePanel === "sidebar" ? "sidebarToggle" : "agendaToggle").focus(); }
+}));
+$("panelBackdrop").addEventListener("click", () => fecharPainel());
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    if (!$("paleta").hidden) { event.preventDefault(); fecharPaleta(); }
+    else if (state.drawer) { event.preventDefault(); fecharPainel(); }
+  }
+  const container = !$("paleta").hidden ? $("paleta") : state.drawer ? $(state.drawer) : null;
+  if (event.key !== "Tab" || !container) return;
+  const focusables = [...container.querySelectorAll("button:not(:disabled), input, [tabindex='0']")].filter(node => node.getClientRects().length);
+  const first = focusables[0], last = focusables.at(-1);
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+});
+for (const media of [mobileSidebar, floatingAgenda]) media.addEventListener("change", () => { fecharPainel(false); atualizarPaineis(); });
+window.addEventListener("resize", posicionarPaleta, { passive: true });
+function aplicarTema(theme) {
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#1f1f1f" : "#ffffff";
+  document.querySelectorAll("[data-theme-toggle]").forEach(button => {
+    button.setAttribute("aria-label", theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro");
+    button.querySelector("use").setAttribute("href", theme === "dark" ? "#i-sun" : "#i-moon");
+  });
+  document.querySelectorAll("[data-theme-label]").forEach(label => { label.textContent = theme === "dark" ? "Modo claro" : "Modo escuro"; });
+}
+document.querySelectorAll("[data-theme-toggle]").forEach(button => button.addEventListener("click", () => {
+  const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; preference("caderno-theme", theme); aplicarTema(theme);
+}));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", event => { if (!preference("caderno-theme")) aplicarTema(event.matches ? "dark" : "light"); });
+window.addEventListener("online", atualizarStatus);
+window.addEventListener("offline", atualizarStatus);
+window.addEventListener("beforeunload", event => {
+  if (state.pending || [...state.drafts.values()].some(value => value.trim()) || (state.editing && state.editing.value.trim() !== state.editing.savedText)) { event.preventDefault(); event.returnValue = ""; }
+});
+aplicarTema(document.documentElement.dataset.theme);
+$("amostraCor").style.background = state.cor;
+atualizarPaineis();
 renderizar();

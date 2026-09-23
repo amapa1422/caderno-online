@@ -5,6 +5,36 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0002
+
+Data: 2026-09-22, 16:53:42 -03:00 (checkpoint inicial).
+
+Resumo do pedido: Aplicar o design system oficial ao Caderno Online, preservando
+autenticação, notas existentes, sincronização e os contratos de banco.
+
+Objetivo: Interface de diário com sidebar recolhível/drawer mobile, editor central,
+calendário, temas claro/escuro, navegação entre dias com virada de folha,
+marca-textos e feedback discreto de gravação, com acessibilidade e testes.
+
+Arquivos afetados: `index.html`, `style.css`, `app.js`, `design_system.html`,
+testes e memória (lista final em CHANGE-0002).
+
+CHANGE relacionado: `CHANGE-0002` (em andamento).
+
+Checkpoint antes: **CP-0003**, `ac98d0649274c25d885b0e6074764ade3e800406`.
+
+Checkpoint depois: Pendente; tarefa em implementação.
+
+Trecho fiel: “Faça as alterações diretamente nos arquivos do projeto.” /
+“Não remova funcionalidades existentes.”
+
+Referência: `design_system.html` localizado em Downloads, ausente da raiz no início;
+será incorporado ao projeto. Tokens oficiais serão preservados, com adaptações
+de contraste/acessibilidade documentadas. Não copiar conteúdo demonstrativo para
+as notas dos usuários. Não há PWA nem autosave de rascunho no código recebido.
+
+Estado: Em andamento.
+
 ## PROMPT-0001
 
 Data: 2026-09-22, 16:25:04 -03:00 (America/Sao_Paulo; checkpoint inicial).
