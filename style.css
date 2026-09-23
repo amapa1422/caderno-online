@@ -342,9 +342,10 @@ html[data-theme="dark"] .eyebrow { color: var(--accent-400); }
 #contadorItens { font-size: var(--fs-xs); color: var(--text-muted); }
 .color-preview.is-none { background: linear-gradient(135deg, transparent 44%, var(--text-muted) 46% 54%, transparent 56%); border-color: var(--text-muted); }
 .note-actions { position: relative; align-self: start; }
-.note-context { display: none; grid-column: 1 / -1; flex-wrap: wrap; gap: var(--sp-1); }
-.note-row.note-active .note-context { display: flex; }
-.note-context .btn { min-height: 32px; padding: var(--sp-1) var(--sp-2); color: var(--text-muted); font-size: var(--fs-2xs); }
+.note-context { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: var(--sp-1); }
+.note-context .btn { min-height: 36px; padding: var(--sp-1) var(--sp-2); color: var(--text-muted); font-size: var(--fs-xs); }
+.note-context button, .note-actions button { -webkit-user-select: none; user-select: none; }
+.note-text { -webkit-user-select: text; user-select: text; }
 .note-context .icon { width: 14px; height: 14px; }
 .complete-button { color: #15803d; }
 html[data-theme="dark"] .complete-button { color: #86cfa0; }
@@ -500,6 +501,7 @@ html[data-theme="dark"] .cal-day.today { color: var(--accent-400); }
   .note-actions { grid-column: 2; justify-content: flex-end; }
   .note-text { font-size: 18px; }
   .note-actions .icon-button { width: 28px; height: 36px; }
+  .note-context .btn { min-height: 40px; font-size: var(--fs-sm); }
     .composer { gap: var(--sp-2); }
   .composer-footer > span { max-width: 155px; }
   .composer-footer .btn { min-height: 40px; }

@@ -113,13 +113,17 @@ try {
         $reload = Invoke-JS ('(' + $reloadChecks + ')()')
         $reload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $artifactDir 'reload.json') -Encoding UTF8
         Write-Output ($reload | ConvertTo-Json -Depth 10 -Compress)
+        Invoke-CDP 'Page.reload' | Out-Null
+        Start-Sleep -Milliseconds 350
+        $removedReload = Invoke-JS ('(' + $reloadChecks + ')(true)')
+        $removedReload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $artifactDir 'removed-reload.json') -Encoding UTF8
+        Write-Output ($removedReload | ConvertTo-Json -Depth 10 -Compress)
         $selectionAction = Invoke-JS '(()=>{const row=document.querySelector("[data-id=first]"),text=row.querySelector(".note-text").firstChild,range=document.createRange();range.setStart(text,0);range.setEnd(text,6);getSelection().removeAllRanges();getSelection().addRange(range);document.dispatchEvent(new Event("selectionchange"));const b=row.querySelector("[data-action=mark]").getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()'
         Invoke-CDP 'Input.dispatchMouseEvent' @{type='mousePressed';x=$selectionAction.x;y=$selectionAction.y;button='left';clickCount=1} | Out-Null
         Invoke-CDP 'Input.dispatchMouseEvent' @{type='mouseReleased';x=$selectionAction.x;y=$selectionAction.y;button='left';clickCount=1} | Out-Null
-        $selectedInk = Invoke-JS 'new Promise(resolve=>setTimeout(()=>resolve(document.querySelector("[data-id=first] mark")?.textContent),80))'
-        $expectedSelection = 'Edi' + [char]0x00E7 + [char]0x00E3 + 'o'
-        if ($selectedInk -ne $expectedSelection) { Write-Output $selectedInk; throw 'Selecao de texto perdida ao clicar em Grifar.' }
-        Write-Output 'SELECTION_MOUSE=PASS (trecho preservado ao clicar)'
+        $wholeInk = Invoke-JS 'new Promise(resolve=>setTimeout(()=>{const row=document.querySelector("[data-id=first]");resolve(row.querySelector("mark")?.textContent===row.querySelector(".note-text").textContent)},100))'
+        if (-not $wholeInk) { throw 'Grifar deve ignorar selecao parcial e cobrir a nota inteira.' }
+        Write-Output 'WHOLE_NOTE_MOUSE=PASS (selecao parcial ignorada)'
         Invoke-CDP 'DOM.enable' | Out-Null
         Invoke-CDP 'CSS.enable' | Out-Null
         $dom = Invoke-CDP 'DOM.getDocument'

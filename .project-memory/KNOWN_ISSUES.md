@@ -1,6 +1,6 @@
 # Problemas conhecidos
 
-Levantamento inicial no BASELINE-0001, atualizado por CHANGE-0005 em 2026-09-23.
+Levantamento inicial no BASELINE-0001, atualizado por CHANGE-0006 em 2026-09-23.
 Estados: `OPEN`, `INVESTIGATING`, `FIXED`, `WONTFIX`. Ao corrigir, preserve a entrada,
 marque `FIXED` e indique o CHANGE responsável e a validação.
 
@@ -127,7 +127,44 @@ Correção: Painéis abertos transitam apenas transform; visibility fica imediat
 Validação: Foco inicial, Tab/Shift+Tab, Escape, backdrop, calendário por teclado
 e paleta no viewport de 320 px aprovados.
 
-## Limites de validação em CHANGE-0005
+## ISSUE-0008
+
+Descrição: Grifar/Remover grifo usavam seleção nativa e podiam afetar somente
+um trecho, contrariando o novo fluxo direto por anotação inteira solicitado.
+Status: FIXED — CHANGE-0006. Prioridade: Alta para a interação solicitada.
+Arquivos: app.js, style.css, index.html e testes.
+Quando: Observado em CP-0009; relato do usuário em PROMPT-0006.
+Causa: capturarSelecao, selectionchange e estado de range direcionavam o tamanho
+do grifo; ações estavam ocultas até ativar a linha. Não há evidência reproduzida
+de gravação da palavra do botão; DOM já separava controles do texto.
+Correção: ID explícito, nota inteira, ações visíveis, sem Selection/Range no app.
+Validação: Seleção parcial ignorada, texto duplicado com IDs independentes,
+controles nunca grifados, remover/reload/recolorir/falhar/retry aprovados.
+
+## ISSUE-0009
+
+Descrição: Acrescentar texto ao final de uma nota integralmente grifada podia
+manter fim do intervalo antigo, deixando o acréscimo sem tinta.
+Status: FIXED — CHANGE-0006. Prioridade: Média.
+Arquivos: app.js (ajustarGrifos) e tests/browser-checks.js.
+Quando: Observado na lógica de CP-0009 durante PROMPT-0006.
+Causa: Ajuste genérico de trecho preservava fim <= prefixo comum ao acrescentar.
+Correção: Detectar intervalo integral e estender ao comprimento novo; manter
+ajuste por prefixo/sufixo somente para dados históricos parciais.
+Validação: Grifar, editar para acrescentar e depois substituir texto mantém
+todo o conteúdo grifado na mesma cor; persistência confirmada após reload.
+
+## Limites de validação em CHANGE-0006
+
+112 verificações: 75 funcionais, 21 em dois reloads, 16 de teclado/mobile.
+Clique CDP com seleção parcial ignorada, mouse/toque no picker, 18 combinações
+viewport/tema, viewport curto, movimento reduzido e console sem erros.
+Capturas desktop/mobile inspecionadas. Backend simulado, sem escrita remota.
+SDK real não repetido (último teste CHANGE-0005). Permanecem pendentes conta
+real/regras, sincronização entre aparelhos, teclado físico mobile, Safari/iOS,
+fontes em outros sistemas e leitores de tela. Sem homologação de produção.
+
+## Limites de validação em CHANGE-0005 (histórico)
 
 64 verificações funcionais, 8 de reload, 13 de teclado/mobile; seleção com mouse,
 arraste mouse/toque CDP, 18 combinações de viewport/tema, viewport 390x360,

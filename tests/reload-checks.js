@@ -1,4 +1,4 @@
-async function () {
+async function (removed = false) {
   const $ = id => document.getElementById(id), results = [];
   const assert = (condition, label) => { if (!condition) throw new Error(label); results.push(label); };
   const start = performance.now();
@@ -18,5 +18,17 @@ async function () {
   $('fecharPaleta').click();
   assert(!document.querySelector('.note-check, [role="checkbox"], [data-action="options"]'), 'reload: no checkbox or ellipsis menu');
   assert(colored.closest('.note-row').classList.contains('done'), 'reload: completion persists alongside saved highlight');
+  const a = document.querySelector('[data-id="duplicate-a"]'), b = document.querySelector('[data-id="duplicate-b"]'), c = document.querySelector('[data-id="duplicate-c"]');
+  assert(removed ? !a.querySelector('mark') : a.querySelector('mark')?.style.getPropertyValue('--highlight') === '#53C7C5', removed ? 'second reload: explicitly removed note remains plain' : 'first reload: note A keeps cyan');
+  assert(b.querySelector('mark')?.style.getPropertyValue('--highlight') === '#EC6686' && !c.querySelector('mark'), 'reload: same-text notes B pink and C plain remain independent');
+  if (!removed) {
+    a.querySelector('[data-action="unmark"]').click();
+    const removalStart = performance.now();
+    while (a.querySelector('mark') || $('statusSalvamento').textContent !== 'Salvo') {
+      if (performance.now() - removalStart > 4000) throw new Error('Remove after reload timeout');
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    assert(localStorage.getItem('caderno-marker-color') === '#DF4A73' && a.querySelector('.note-text').textContent === 'Texto igual', 'reload: direct removal keeps text and global color before second reload');
+  }
   return { ok: true, tests: results.length, results };
 }

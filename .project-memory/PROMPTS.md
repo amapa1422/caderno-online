@@ -5,6 +5,27 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0006
+
+Data: 2026-09-23, 15:37:30 -03:00 (checkpoint inicial).
+Resumo: Corrigir Grifar/Remover grifo como ações inversas sobre a anotação inteira,
+identificada por ID, sem dependência de seleção do navegador. Ações visíveis sem
+clique prévio; controles não selecionáveis, conteúdo continua copiável. Reutilizar
+cor global e persistência atual, substituir cor ao regrifar e preservar cores
+antigas, conclusão independente, edição, exclusão e todo o restante do sistema.
+Manter passada 250–400 ms e adicionar remoção suave 150–250 ms. Eliminar listeners
+de seleção desnecessários; testar múltiplas notas, IDs/textos iguais, reload,
+edição com tinta, mobile, temas, falhas e console. Sem rollback geral ou redesign.
+Trecho: “Marca-texto por anotação inteira, usando cor global selecionada no topo.”
+Inicial: CP-0010, `e33ada960336a47b53388dbf3f94193d23b6485f`.
+Final: CP-0011, commit em `refs/tags/CP-0011`. CHANGE-0006.
+Estado: Concluído localmente. 75 verificações funcionais + 21 em dois reloads +
+16 mobile/teclado; 18 combinações viewport/tema, clique real ignorando seleção,
+arraste mouse/toque, console sem erros. Conta real e aparelhos físicos pendentes.
+Arquivos: app.js, index.html, style.css, testes e memória. DEC-0011 substitui
+interação por trechos; edição/conclusão/exclusão e grifos históricos preservados.
+Árvore inicial limpa; apenas tests/.artifacts ignorado. Sem push/deploy.
+
 ## PROMPT-0005
 
 Data: 2026-09-23, 15:08:43 -03:00 (checkpoint inicial).

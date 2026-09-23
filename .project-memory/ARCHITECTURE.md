@@ -1,6 +1,6 @@
 ﻿# Arquitetura do Caderno Online
 
-Atualizada por PROMPT-0005 / CHANGE-0005 em 2026-09-23.
+Atualizada por PROMPT-0006 / CHANGE-0006 em 2026-09-23.
 
 ## Estrutura e interface
 
@@ -21,8 +21,9 @@ não há agenda com horários nem conteúdo fictício em produção.
 
 Compositor antes da lista: textarea, seletor global de marca-texto, Adicionar e
 ajuda. Notas novas sem grifo. Cada linha tem ✓ feito/desfazer e × excluir à
-direita, sem checkbox à esquerda nem três pontinhos. Tocar/focar/selecionar texto
-revela Editar, Grifar e Remover grifo, preservando funcionalidades antigas.
+direita, sem checkbox à esquerda nem três pontinhos. Editar, Grifar e Remover grifo
+ficam sempre visíveis abaixo do texto, exceto durante edição. Remover fica
+desabilitado quando não há destaque. As ações usam exclusivamente o ID da linha.
 Feitas ficam com opacidade .86 no texto (incluindo grifo visível), check mais
 forte e microanimação 180 ms ao alternar. Não há riscado ou progresso de tarefas.
 Exclusão usa dialog nativo, foco inicial Cancelar, Escape/cancelamento e retry
@@ -96,8 +97,13 @@ exigir cor legada em notas novas; isso requer validação em conta real.
   digitado durante gravação é salvo em seguida. Falhas preservam a edição.
 - Navegação aguarda inclusão/edição; erro mantém dia/texto. Usa Web Animations,
   com fade breve sem rotação em prefers-reduced-motion.
-- Grifos de trecho são divididos/substituídos ao recolorir/remover. Edição ajusta
-  intervalos comparando prefixo/sufixo. Remover grifo nunca remove o texto.
+- Grifar salva um único intervalo sobre o texto inteiro, substituindo qualquer
+  tinta anterior. Remover salva array vazio v2 e não altera texto/conclusão/cor
+  global. Reutiliza salvarItem e campos existentes, sem novo esquema.
+- Edição de grifo integral mantém a cor em todo o texto, inclusive acréscimos.
+  Intervalos parciais antigos continuam renderizados; ao editar, ajustam-se por
+  prefixo/sufixo. Helpers de intervalos preservados para compatibilidade de dados,
+  sem captura de seleção do navegador ou novas ações sobre trechos.
 - Status informa gravação, edição, cache/conexão e falhas; toasts explicam erros.
 
 Não há resolução colaborativa de conflitos entre dispositivos: merge de campos
@@ -115,7 +121,7 @@ Preferências: caderno-theme, caderno-sidebar, caderno-agenda e
 caderno-recent-colors (até seis HEX distintos, sem textos/notas) e
 caderno-marker-color (HEX atual global; default #E85D75). Picker só existe no
 topo, atualiza cor/indicador/preferência ao vivo, nunca recolore notas sozinho.
-Ao aplicar na linha/seleção, captura cor atual e salva somente essa nota. Remover
+Ao aplicar pelo ID da linha, captura cor atual e salva somente essa nota. Remover
 grifo não muda preferência global. Novas notas sem tinta automaticamente.
 Tema segue o sistema
 até escolha explícita e é aplicado antes do CSS. Auth persistente não significa
@@ -129,15 +135,20 @@ HSV, range Hue nativo, input HEX validado, fallback input color, preview ao vivo
 e recentes. Setas ajustam S/V (Shift acelera). Drag/input atualizam preview e
 preferência global local, sem escrita Firestore. Pronto fecha; recentes registrados
 ao fechar/aplicar. Ações Grifar/Remover grifo na nota não abrem seletor individual.
-Texto selecionado aceita grifo parcial; pointerdown captura seleção antes do
-foco mudar para o botão. Paleta fecha fora/Escape, mantém foco e seleção, respeita
+Não há listeners selectionchange nem captura de Selection/Range para grifo.
+Botões da linha usam user-select:none; conteúdo continua selecionável/copiável.
+Paleta fecha fora/Escape, mantém gerenciamento de foco e respeita
 visualViewport e safe-area, com rolagem interna quando a altura é pequena.
 O shell acompanha visualViewport; com compositor focado, resize traz Adicionar
 para a área visível. Teclado real de iOS/Android ainda exige teste manual.
 
 Grifos são mark inline, background-size 76% de altura, bordas assimétricas,
 color-mix com opacidade .38 clara/.25 escura e animação CSS 340 ms da esquerda
-para a direita. Rótulos, status, skip link, foco
+para a direita, inclusive ao regrifar com a mesma cor. Remoção retrai apenas
+o background dos marks por 200 ms via Web Animations, sem sumir com o texto.
+Aguarda animação, verifica sessão/ID atual e grava; falhas cancelam o efeito e
+restauram a tinta. Movimento reduzido desativa ambas as animações de grifo.
+Rótulos, status, skip link, foco
 visível e movimento reduzido presentes. Sem certificação WCAG ou teste com
 leitor de tela/Safari físico.
 

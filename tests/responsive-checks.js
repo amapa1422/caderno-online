@@ -28,6 +28,14 @@ async function () {
   document.querySelector('.page-heading').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
   assert($('paleta').hidden, 'mobile: outside tap closes picker');
   const row = document.querySelector('.note-row');
+  assert([...row.querySelectorAll('.note-context button')].every(button => button.getBoundingClientRect().height >= 40 && parseFloat(getComputedStyle(button).fontSize) >= 12), 'mobile: direct actions visible with readable text and touch height');
+  const currentColor = localStorage.getItem('caderno-marker-color');
+  row.querySelector('[data-action="unmark"]').click();
+  await new Promise(resolve => setTimeout(resolve, 350));
+  assert(!row.querySelector('mark') && localStorage.getItem('caderno-marker-color') === currentColor, 'mobile: direct removal clears whole note without changing global color');
+  row.querySelector('[data-action="mark"]').click();
+  await new Promise(resolve => setTimeout(resolve, 100));
+  assert(row.querySelector('mark')?.textContent === row.querySelector('.note-text').textContent && !row.querySelector('.note-context mark'), 'mobile: direct highlight covers content only');
   row.querySelector('[data-action="delete"]').click();
   await new Promise(resolve => setTimeout(resolve, 30));
   const dialog = $('confirmarExclusao'), rect = dialog.getBoundingClientRect();

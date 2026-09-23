@@ -3,6 +3,75 @@
 Adicione novas entradas no topo, após esta introdução. Preserve as anteriores;
 não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
+## CHANGE-0006
+
+Data: 2026-09-23. Hora inicial: 15:37:30 -03:00.
+Prompt: PROMPT-0006. Inicial: CP-0010, `e33ada960336a47b53388dbf3f94193d23b6485f`.
+Final: CP-0011, commit em `refs/tags/CP-0011`.
+
+### Objetivo / comportamento anterior
+
+Marca-texto por anotação inteira, usando cor global selecionada no topo.
+Antes, Grifar/Remover consultavam Selection/Range e podiam agir somente no trecho
+selecionado. Ações exigiam ativar a linha. A edição de uma nota integralmente
+grifada podia deixar palavras acrescentadas ao final fora do grifo.
+
+### Arquivos alterados
+
+app.js, index.html, style.css; tests/browser-checks.js, browser.ps1,
+reload-checks.js, responsive-checks.js e README.md; CURRENT_STATE.md,
+ARCHITECTURE.md, DECISIONS.md, PROMPTS.md, CHANGELOG.md, KNOWN_ISSUES.md e
+checkpoints CP-0010/CP-0011 na memória.
+
+### Alterações realizadas / funcionalidades afetadas
+
+Mesma função aplicarMarca(noteId, color) aplica um único intervalo integral com
+cor atual ou remove todos com array vazio. Reutiliza salvarItem, grifos,
+versaoGrifos:2 e setDoc merge, sem campo novo. Seleção no navegador não determina
+destino ou tamanho. Removidos captura/estado/listeners de seleção; helpers de
+intervalos preservados somente para ler/editar notas históricas sem migração.
+
+Editar/Grifar/Remover grifo ficam visíveis sem ativar a nota; botões não selecionáveis,
+conteúdo copiável. Remover desabilitado sem tinta. DOM mantém controles fora dos
+marks inline, que cobrem somente o texto. Ações usam ID, inclusive em textos iguais.
+Edição mantém tinta integral ao acrescentar/substituir texto. Animação de passada
+340 ms também ao reaplicar a mesma cor; remoção retrai 200 ms e restaura tinta
+em falha, respeitando movimento reduzido e troca de sessão antes de gravar.
+Dica de uso atualizada para não orientar seleção de trechos. Mobile usa ações
+com quebra de linha, altura 40 px e texto legível. Conclusão/exclusão, fonte,
+shell, calendário, login, preferência global e picker continuam preservados.
+DEC-0011 substitui interação parcial de DEC-0010; ISSUE-0008/0009 corrigidos.
+
+### Possíveis impactos
+
+Novas ações não permitem grifar trechos: remoção solicitada explicitamente.
+Ranges parciais históricos mantêm aparência até Grifar/Remover naquela nota.
+Cor global, outras notas e conclusão permanecem independentes. Sem rollback,
+migração destrutiva, alterações de Firebase/configuração/regras ou dados remotos.
+
+### Testes realizados
+
+PowerShell/CDP: 75 verificações funcionais, 11 no primeiro reload, 10 no segundo,
+16 de teclado/mobile (112 no total). Grifo integral mesmo com seleção parcial,
+recoloração sem empilhar, controles separados, falhas de aplicar/remover e retry,
+animação de remoção 200 ms e reaplicação, edição com acréscimo/substituição,
+IDs diferentes/textos iguais, exclusão sem afetar cores restantes aprovados.
+Primeiro reload preserva A ciano/B rosa/C sem tinta; remove A diretamente e
+segundo reload mantém A sem tinta/B rosa/C sem tinta. Cor global preservada.
+Clique real via CDP ignora seleção parcial e grifa texto inteiro. Arraste
+mouse/toque no picker, 18 combinações de viewport/tema (320–1920 px), viewport
+390x360, movimento reduzido e console sem erros. Capturas 375/light e 1440/dark
+inspecionadas, destaque inline sem preencher linha. Fonte CDP: Segoe Print.
+Última mudança de produto após suíte: apenas texto da dica sobre marca-texto.
+git diff --check sem erros; ausência de APIs/listeners de seleção no app conferida.
+SDK real não repetido nesta tarefa; Firebase/configuração sem alterações.
+
+### Resultado
+
+Concluído e validado localmente. Firebase autenticado/regras, sincronização
+entre aparelhos, teclado físico mobile, Safari/iOS e leitores de tela exigem
+teste manual. Checkpoints locais, sem push/deploy. Metadados registram hash final.
+
 ## CHANGE-0005
 
 Data: 2026-09-23. Hora inicial: 15:08:43 -03:00.

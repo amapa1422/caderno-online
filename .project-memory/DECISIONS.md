@@ -5,10 +5,32 @@ o status da antiga para `Substituída por DEC-XXXX`, sem apagar seu contexto.
 As razões originais das escolhas de código anteriores à memória não são conhecidas;
 observações do baseline estão identificadas como tal.
 
+## DEC-0011
+
+Título: Marca-texto por anotação inteira, usando cor global selecionada no topo.
+Status: Ativa. Substitui DEC-0010 quanto a seleção parcial e ações contextuais.
+Data: 2026-09-23. Origem: PROMPT-0006 / CHANGE-0006.
+Motivo: Pedido explícito de Grifar/Remover grifo diretos e inversos, sem selecionar
+trechos ou clicar antes na nota. Edição, conclusão e exclusão continuam existentes.
+Decisão: Aplicar/remover pelo ID da linha, com a mesma função de gravação e merge.
+Grifar substitui grifos por um único intervalo [0, texto.length] na cor global;
+remover grava grifos:[] e versaoGrifos:2. Sem campo novo, migração ou mudança global.
+Editar, Grifar e Remover grifo ficam visíveis abaixo da nota, exceto durante edição;
+remoção desabilitada quando não há tinta. Controles não selecionáveis; texto copiável.
+Removidos listeners/estado/captura de Selection/Range da interação de destaque.
+Helpers de intervalos permanecem somente para renderizar e editar dados históricos.
+Grifos parciais antigos não são convertidos até ação explícita na nota.
+Edição de grifo integral estende a cor por todo o texto atualizado. Aplicar anima
+340 ms, inclusive na reaplicação da mesma cor; remover retrai 200 ms, restaura
+visual em erro e respeita movimento reduzido. A remoção aguarda animação e verifica
+sessão/ID novamente antes de gravar, evitando escrita após troca de conta.
+Arquivos: app.js, index.html, style.css, testes e memória. Demais decisões mantidas.
+
 ## DEC-0010
 
 Título: Feito discreto à direita, exclusão confirmada e marca-texto global.
-Status: Ativa. Substitui DEC-0008 em conclusão, ações da linha e seleção de cor.
+Status: Substituída por DEC-0011 quanto a seleção parcial e ações contextuais;
+ativa nos demais aspectos. Substitui DEC-0008 em conclusão, ações e seleção de cor.
 Data: 2026-09-23. Origem: PROMPT-0005 / CHANGE-0005.
 Motivo: O novo pedido substitui explicitamente a retirada de conclusão e remove
 três pontinhos. Preserva a caligrafia e o compositor acima da lista.
