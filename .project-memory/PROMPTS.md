@@ -18,7 +18,7 @@ de seleção desnecessários; testar múltiplas notas, IDs/textos iguais, reload
 edição com tinta, mobile, temas, falhas e console. Sem rollback geral ou redesign.
 Trecho: “Marca-texto por anotação inteira, usando cor global selecionada no topo.”
 Inicial: CP-0010, `e33ada960336a47b53388dbf3f94193d23b6485f`.
-Final: CP-0011, commit em `refs/tags/CP-0011`. CHANGE-0006.
+Final: CP-0011, `b238c41e0e4559b4b67e394da375ffe1ca6c160d`. CHANGE-0006.
 Estado: Concluído localmente. 75 verificações funcionais + 21 em dois reloads +
 16 mobile/teclado; 18 combinações viewport/tema, clique real ignorando seleção,
 arraste mouse/toque, console sem erros. Conta real e aparelhos físicos pendentes.

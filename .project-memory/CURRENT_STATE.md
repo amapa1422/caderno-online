@@ -86,7 +86,7 @@ offline de notas explicitamente configurada. Git não restaura dados remotos.
 PROMPT-0006 tornou Grifar/Remover grifo ações inversas sobre a nota inteira por ID,
 sem seleção prévia; corrigiu extensão da tinta ao editar e animou sua remoção.
 
-- Checkpoint final: **CP-0011**, commit em `refs/tags/CP-0011`.
+- Checkpoint final: **CP-0011**, `b238c41e0e4559b4b67e394da375ffe1ca6c160d`.
 - Inicial: CP-0010, `e33ada960336a47b53388dbf3f94193d23b6485f`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.
