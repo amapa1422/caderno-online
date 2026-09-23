@@ -75,7 +75,7 @@ offline de notas explicitamente configurada. Git não restaura dados remotos.
 PROMPT-0004 recuperou criação acima da lista e caligrafia original, retirou o
 conceito de tarefa e implementou marca-texto livre, mantendo o shell moderno.
 
-- Checkpoint final: **CP-0007**, commit em `refs/tags/CP-0007`.
+- Checkpoint final: **CP-0007**, `5e05485d4400f76409da3be99d0d213c2ceb321f`.
 - Inicial: CP-0006, `3ab3b527c06d0d76990d9483c7e295af8a36811f`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.

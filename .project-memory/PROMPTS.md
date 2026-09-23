@@ -21,7 +21,7 @@ Fonte investigada: CP-0003 e f4b7e9f usam Segoe Print, Bradley Hand, Comic Sans 
 cursive. Restaurar as duas primeiras, removendo Comic Sans conforme pedido;
 fontes do sistema, sem redistribuir arquivos proprietários.
 Checkpoint antes: CP-0006, `3ab3b527c06d0d76990d9483c7e295af8a36811f`.
-Checkpoint depois: CP-0007, commit em `refs/tags/CP-0007`.
+Checkpoint depois: CP-0007, `5e05485d4400f76409da3be99d0d213c2ceb321f`.
 CHANGE: CHANGE-0004.
 Arquivos: index.html, style.css, app.js, módulo leve de cores, testes e memória.
 Estado: Concluído e validado localmente. 57 testes funcionais, 6 de reload, 11 de
