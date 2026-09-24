@@ -18,7 +18,7 @@ cores livres, viewports desktop/mobile, assets e console; registrar limites reai
 Trecho: “Quero SOMENTE adicionar uma nova camada visual opcional baseada nos
 arquivos de tema que já possuo.” Pedido completo: anexo Texto colado.txt desta tarefa.
 Inicial: CP-0013, `9f74409dd1329d1dcd34a75a1f1872355f77352f`.
-Final: CP-0014, `refs/tags/CP-0014`. CHANGE-0008 (CHANGE-0007 já reservado por PROMPT-0007).
+Final: CP-0014, `bd0217ebd101f47b713176396c80284ad12d0aab`. CHANGE-0008.
 Estado: Concluído localmente. Chrome: 112 verificações por skin; Edge: 50 de skins,
 30 combinações viewport/base/skin, persistência/reload, teclado e console limpo.
 Normal comparado pixel a pixel com CP-0013, desktop/mobile claro/escuro: diferença

@@ -7,7 +7,7 @@ não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
 Data: 2026-09-24. Hora inicial: 12:34:25 -03:00; validações finais: 12:51 -03:00.
 Prompt: PROMPT-0008. Inicial: CP-0013, `9f74409dd1329d1dcd34a75a1f1872355f77352f`.
-Final: CP-0014, `refs/tags/CP-0014` (hash registrado após criar a tag).
+Final: CP-0014, `bd0217ebd101f47b713176396c80284ad12d0aab`, 12:53:39 -03:00.
 CHANGE-0007 permanece reservado pelo pedido anterior, ainda pendente no histórico.
 
 ### Objetivo

@@ -96,7 +96,7 @@ app.js, style.css, color.js e firebase.js permanecem idênticos ao início da ta
 PROMPT-0007 consta como pendente: HEAD recebido só acrescentava seus registros
 e um diagnóstico de teste, sem alteração de produto. Não foi concluído neste escopo.
 
-- Checkpoint final: **CP-0014**, `refs/tags/CP-0014` (hash a resolver após commit).
+- Checkpoint final: **CP-0014**, `bd0217ebd101f47b713176396c80284ad12d0aab`.
 - Inicial: CP-0013, `9f74409dd1329d1dcd34a75a1f1872355f77352f`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.
