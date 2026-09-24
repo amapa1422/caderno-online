@@ -73,6 +73,7 @@
       <nav class="primary-nav" aria-label="Atalhos">
         <button id="navHoje" class="nav-item" type="button"><svg class="icon"><use href="#i-calendar"/></svg><span>Hoje</span><span class="nav-count" id="contagemHoje">0</span></button>
         <button id="novaAnotacao" class="nav-item" type="button"><svg class="icon"><use href="#i-plus"/></svg><span>Nova anotação</span></button>
+        <button id="abrirContas" class="nav-item" type="button" hidden><svg class="icon"><use href="#i-plus"/></svg><span>Criar conta</span></button>
       </nav>
       <div class="nav-section-heading"><h2 id="tituloPaginas">SUAS PÁGINAS</h2><span id="totalPaginas">0</span></div>
       <nav id="listaPaginas" class="pages-nav" aria-labelledby="tituloPaginas"></nav>
@@ -144,6 +145,17 @@
     <div class="dialog-actions"><button id="cancelarExclusao" class="btn btn-ghost" type="button" autofocus>Cancelar</button><button id="excluirConfirmado" class="btn btn-danger" type="button">Excluir</button></div>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="administrarContas" class="delete-dialog account-dialog" aria-labelledby="tituloContas">
+    <h2 id="tituloContas">Criar conta</h2>
+    <p>A nova conta terá um caderno privado, separado dos demais usuários.</p>
+    <form id="formConta" class="login-form">
+      <label class="field" for="nomeConta">Nome<input class="input" id="nomeConta" autocomplete="off" maxlength="80" required></label>
+      <label class="field" for="emailConta">E-mail<input class="input" id="emailConta" type="email" autocomplete="off" maxlength="254" required></label>
+      <label class="field" for="senhaConta">Senha inicial<input class="input" id="senhaConta" type="password" autocomplete="new-password" minlength="6" maxlength="128" required></label>
+      <p id="resultadoConta" class="account-result" role="status" aria-live="polite"></p>
+      <div class="dialog-actions"><button id="fecharContas" class="btn btn-ghost" type="button">Fechar</button><button id="criarConta" class="btn btn-primary" type="submit">Criar conta</button></div>
+    </form>
+  </dialog>
   <noscript>Ative o JavaScript no navegador para acessar o seu caderno.</noscript>
   <script type="module" src="./app.js"></script>
 </body>

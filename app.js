@@ -1,3 +1,4 @@
+import { resetAccounts, setAccountsUser } from "./accounts.js";
 import {
   auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged,
   collection, doc, setDoc, deleteDoc, onSnapshot
@@ -5,7 +6,7 @@ import {
 import { normalizarCor, hsvParaHex, hexParaHSV } from "./color.js";
 const $ = id => document.getElementById(id);
 const icon = name => '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"/></svg>';
-const STORAGE_KEY = "meu-caderno-diario-v1", MIGRATION_KEY = "meu-caderno-diario-migrado-firebase-v1";
+
 const state = {
   usuario: null, data: hojeISO(), cor: normalizarCor(preference("caderno-marker-color")) || "#E85D75",
   registros: {}, unsubscribe: null, ready: false, pending: 0, error: false, cached: false,
@@ -52,8 +53,11 @@ function atualizarStatus() {
   $("btnAdicionar").disabled = !state.ready || !!state.addPromise || !state.usuario || !$("novoItem").value.trim();
   $("listaItens").setAttribute("aria-busy", String(!state.ready));
 }
-/* Firebase configuration, collection paths and legacy fields remain unchanged. */
-function referenciaItem(id, uid = state.usuario?.uid) { if (!uid) throw new Error("Sessão encerrada."); return doc(db, "users", uid, "caderno", id); }
+/* Cada conta usa exclusivamente o próprio caderno: users/{uid}/caderno/{id}. */
+function referenciaItem(id, uid = state.usuario?.uid) {
+  if (!uid) throw new Error("Sessão encerrada.");
+  return doc(db, "users", uid, "caderno", id);
+}
 async function gravar(operation) {
   const session = state.session; state.pending++; state.error = false; atualizarStatus();
   try { return await operation(); }
@@ -91,27 +95,11 @@ function iniciarSincronizacao(session) {
     if (!state.turning) renderizar(); else { renderizarCalendario(); renderizarPaginas(); atualizarStatus(); }
   }, () => {
     if (session !== state.session) return;
+    state.ready = false; state.registros = {}; resetAccounts(); renderizar();
     state.error = true; $("statusSalvamento").textContent = "Falha na sincronização"; $("statusSalvamento").dataset.state = "error";
     $("listaItens").setAttribute("aria-busy", "false");
     mostrarToast("Não foi possível carregar o caderno. Verifique a conexão e entre novamente.", "erro");
   });
-}
-async function migrarLocalStorageParaFirebase(uid) {
-  let old;
-  try { if (localStorage.getItem(MIGRATION_KEY) === "1") return; old = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch { return; }
-  if (!old || typeof old !== "object") { preference(MIGRATION_KEY, "1"); return; }
-  try {
-    const operations = [];
-    Object.entries(old).forEach(([date, items]) => {
-      if (!Array.isArray(items)) return;
-      items.forEach(item => operations.push(setDoc(referenciaItem(item.id || gerarId(), uid), {
-        data: date, texto: String(item.texto || ""), concluido: Boolean(item.concluido), ...(item.cor ? { cor: item.cor } : {}),
-        criadoEm: item.criadoEm || Date.now(), atualizadoEm: Date.now()
-      }, { merge: true })));
-    });
-    await Promise.all(operations); preference(MIGRATION_KEY, "1");
-    if (operations.length && state.usuario?.uid === uid) mostrarToast("Anotações antigas importadas.");
-  } catch { if (state.usuario?.uid === uid) mostrarToast("Não foi possível importar as anotações antigas. Elas continuam neste navegador.", "erro"); }
 }
 $("formLogin").addEventListener("submit", async event => {
   event.preventDefault(); if ($("btnEntrar").disabled) return;
@@ -134,7 +122,7 @@ $("btnSair").addEventListener("click", async () => {
 });
 onAuthStateChanged(auth, async usuario => {
   const session = ++state.session;
-  pararSincronizacao(); clearTimeout(editTimer);
+  pararSincronizacao(); resetAccounts(); clearTimeout(editTimer);
   state.usuario = usuario; state.ready = false; state.registros = {}; state.pending = 0; state.error = false;
   state.addPromise = null; state.editing = null; state.drafts.clear(); state.busyItems.clear(); state.marking.clear();
   state.deletion = null; $("confirmarExclusao").close();
@@ -144,7 +132,9 @@ onAuthStateChanged(auth, async usuario => {
   if (!usuario) return;
   const name = usuario.displayName || usuario.email?.split("@")[0] || "Meu caderno";
   $("nomeUsuario").textContent = name; $("emailUsuario").textContent = usuario.email || ""; $("avatarUsuario").textContent = name[0].toUpperCase();
-  await migrarLocalStorageParaFirebase(usuario.uid);
+  // O acesso ao caderno não depende de custom claims nem de um campo `caderno` no perfil.
+  // O isolamento real é feito pelo UID no caminho do Firestore e pelas Security Rules.
+  setAccountsUser(usuario);
   if (session === state.session) iniciarSincronizacao(session);
 });
 /* Each draft belongs to its date; an in-flight save never clears newer typing. */
@@ -604,6 +594,10 @@ function atualizarPaineis() {
   }
 }
 function fecharPainel(restoreFocus = true) { const open = !!state.drawer; state.drawer = null; atualizarPaineis(); if (open && restoreFocus) panelReturnFocus?.focus(); }
+$("abrirContas").addEventListener("click", () => { fecharPaleta(false); fecharPainel(false); });
+$("administrarContas").addEventListener("close", () => {
+  if (state.usuario && mobileSidebar.matches) $("sidebarToggle").focus();
+});
 function alternarPainel(panel) {
   fecharPaleta(false);
   const floating = panel === "sidebar" ? mobileSidebar.matches : floatingAgenda.matches;

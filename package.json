@@ -1,0 +1,10 @@
+{
+  "name": "caderno-online-tools",
+  "private": true,
+  "scripts": {
+    "build:site": "node scripts/build-site.cjs",
+    "test:backend": "npm --prefix functions test",
+    "test:emulators": "node node_modules/firebase-tools/lib/bin/firebase.js emulators:exec --project demo-caderno --only auth,firestore,functions \"node --test tests/firebase-integration.test.cjs\""
+  },
+  "devDependencies": { "@firebase/rules-unit-testing": "^5.0.0", "firebase": "12.18.0", "firebase-tools": "^15.0.0" }
+}

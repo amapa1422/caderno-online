@@ -29,6 +29,7 @@ import {
 /* =====================================================
    CONFIGURAÇÃO
 ===================================================== */
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAVKZP5x488m6p63VZVPTi8tJsKsPmNAJE",
@@ -46,6 +47,8 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const functions = getFunctions(app, "southamerica-east1");
+const createCadernoUser = httpsCallable(functions, "createCadernoUser");
 
 /* =====================================================
    LOGIN PERSISTENTE
@@ -67,6 +70,7 @@ export {
     signOut,
     onAuthStateChanged,
     db,
+    createCadernoUser,
     collection,
     doc,
     setDoc,

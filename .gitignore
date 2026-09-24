@@ -1,1 +1,11 @@
 tests/.artifacts/
+node_modules/
+functions/node_modules/
+.firebase/
+*-debug.log*
+backups/
+dist/
+functions/.env*
+!functions/.env.example
+*service-account*.json
+application_default_credentials.json

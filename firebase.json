@@ -1,0 +1,12 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "caderno",
+      "ignore": ["node_modules", ".git", "test", "scripts", "*-debug.log*"]
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

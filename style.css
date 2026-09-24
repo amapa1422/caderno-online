@@ -364,6 +364,10 @@ html[data-theme="dark"] .note-row.done .complete-button { color: #86efac; }
 .delete-dialog .delete-error { color: var(--danger); margin-top: var(--sp-2); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--sp-2); margin-top: var(--sp-5); }
 .dialog-actions .btn { min-height: 40px; }
+.account-dialog { width: min(420px, calc(100vw - 32px)); }
+.account-dialog .login-form { margin-top: var(--sp-4); }
+.account-dialog .field, .account-dialog .input { min-width: 0; width: 100%; }
+.account-result { font-size: var(--fs-sm); line-height: 1.5; color: var(--text); overflow-wrap: anywhere; }
 .btn-danger { color: white; background: #b91c1c; }
 .btn-danger:hover { background: #991b1b; color: white; }
 .page-footer { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-16); color: var(--text-muted); font-size: var(--fs-2xs); }
