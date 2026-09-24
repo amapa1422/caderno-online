@@ -1,6 +1,6 @@
 ﻿# Estado atual
 
-Atualizado em: 2026-09-23 — PROMPT-0006 / CHANGE-0006.
+Atualizado em: 2026-09-24 — PROMPT-0008 / CHANGE-0008.
 Este arquivo descreve somente o presente. Histórico em CHANGELOG.md.
 
 ## Projeto e funcionalidades
@@ -13,6 +13,12 @@ com Firebase Auth e sincronização Firestore em tempo real.
   editor central, calendário mensal e resumo do dia.
 - Temas claro/escuro, seguindo a preferência do sistema até escolha explícita;
   tema e recolhimento dos painéis salvos no navegador.
+- Aparência opcional Normal/Homem-Aranha/Venom junto ao botão claro/escuro.
+  Skins nativas com fundos e teias originais, cores isoladas e preferência local
+  caderno-visual-theme, independente de data-theme. Normal mantém o desenho
+  anterior; único controle novo no rodapé existente, sem aumentar sua altura.
+  Preferência aplicada no head, também no login. Skins não alteram dados,
+  Firebase, fontes/cores de grifo ou lógica das anotações. Sem extensão necessária.
 - Navegação por data, calendário, Hoje e dia anterior/seguinte com virada de folha.
 - Painéis móveis com fundo inerte, Escape, contenção e devolução de foco.
 - Inclusão explícita de anotações de até 140 caracteres por Adicionar/Enter;
@@ -58,6 +64,8 @@ Sem framework, bundler, package.json ou pipeline de deploy versionados.
 | style.css | Tokens da referência, componentes, temas e responsividade. |
 | app.js | Auth, migração, gravação, edição, grifos, calendário e interação. |
 | color.js | Conversão HSV/HEX e normalização compatível de cores, sem bibliotecas. |
+| visual-themes.js / visual-themes.css | Preferência visual local e skins isoladas; sem acesso ao estado ou Firebase. |
+| assets/themes/spider/ | Dois fundos PNG, duas teias SVG e spider-mark.svg originais. |
 | firebase.js | Configuração e exports Firebase, preservados do baseline. |
 | icone.png | Favicon e apple-touch-icon existente. |
 | design_system.html | Referência visual standalone incorporada em PROMPT-0002. |
@@ -83,21 +91,26 @@ offline de notas explicitamente configurada. Git não restaura dados remotos.
 
 ## Última alteração e checkpoint estável
 
-PROMPT-0006 tornou Grifar/Remover grifo ações inversas sobre a nota inteira por ID,
-sem seleção prévia; corrigiu extensão da tinta ao editar e animou sua remoção.
+PROMPT-0008 adicionou as skins nativas opcionais Normal, Homem-Aranha e Venom.
+app.js, style.css, color.js e firebase.js permanecem idênticos ao início da tarefa.
+PROMPT-0007 consta como pendente: HEAD recebido só acrescentava seus registros
+e um diagnóstico de teste, sem alteração de produto. Não foi concluído neste escopo.
 
-- Checkpoint final: **CP-0011**, `b238c41e0e4559b4b67e394da375ffe1ca6c160d`.
-- Inicial: CP-0010, `e33ada960336a47b53388dbf3f94193d23b6485f`.
+- Checkpoint final: **CP-0014**, `refs/tags/CP-0014` (hash a resolver após commit).
+- Inicial: CP-0013, `9f74409dd1329d1dcd34a75a1f1872355f77352f`.
 - Antes do redesign: CP-0003, `ac98d0649274c25d885b0e6074764ade3e800406`.
 - Baseline: BASELINE-0001 / CP-0001, `2eb960f0b473a216e82e4d242dff044ecac0e481`.
-- Nível validado: 75 verificações funcionais, 21 em dois reloads, 16 de teclado/mobile,
-  arraste via CDP com mouse/toque, viewport reduzido 390x360, nove larguras
-  (320–1920 px) nos dois temas, movimento reduzido e console sem erros em Chrome
-  headless com backend simulado. Capturas desktop/mobile inspecionadas.
+- Nível validado: Chrome, 112 verificações por skin (336), mouse/toque, viewport
+  390x360, nove larguras (320–1920 px) nos dois temas e console limpo. Testes de
+  skins: 50 verificações, 30 combinações viewport/base/skin, contraste, preferência,
+  reload, armazenamento bloqueado e teclado nativo. Backend simulado.
+  Comparação visual Normal com CP-0013 e validação Edge descritas em CHANGE-0008.
+  Capturas de desktop/mobile/login/picker/drawers/dialog inspecionadas.
 - Fonte efetivamente renderizada confirmada por CDP: Segoe Print, não customizada.
-- SDK real: inicialização validada em CHANGE-0005; não repetida nesta tarefa.
+- SDK real: inicialização na tela de login validada nesta tarefa, console limpo,
+  sem autenticar nem gravar dados remotos.
 - Pendente manual: login/CRUD/grifos em conta real, regras, sincronização entre
   dispositivos, Safari/iOS, teclado físico mobile e leitores de tela. Dispositivos
   sem as fontes originais usam cursive do sistema. Não é homologação de produção.
 - Checkpoints locais, sem push/deploy. Commit complementar de hashes pertence
-  ao mesmo PROMPT-0006 e não altera o aplicativo nem move CP-0011.
+  ao mesmo PROMPT-0008 e não altera o aplicativo nem move CP-0014.

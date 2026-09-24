@@ -5,6 +5,33 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0008
+
+Data: 2026-09-24, 12:34:25 -03:00 (checkpoint inicial).
+Resumo: Adicionar somente skins opcionais Normal, Homem-Aranha e Venom, com
+assets existentes da extensão, CSS isolado, data-visual-theme independente de
+data-theme e preferência caderno-visual-theme local aplicada cedo. Seletor discreto,
+camada fixa sem interceptar cliques, contraste e responsividade. Preservar Normal,
+fontes, grifos e picker, funções do caderno, Firebase, login e dados. Sem APIs da
+extensão, redesign, FAB ou alterações PWA. Validar troca/reload, fluxos existentes,
+cores livres, viewports desktop/mobile, assets e console; registrar limites reais.
+Trecho: “Quero SOMENTE adicionar uma nova camada visual opcional baseada nos
+arquivos de tema que já possuo.” Pedido completo: anexo Texto colado.txt desta tarefa.
+Inicial: CP-0013, `9f74409dd1329d1dcd34a75a1f1872355f77352f`.
+Final: CP-0014, `refs/tags/CP-0014`. CHANGE-0008 (CHANGE-0007 já reservado por PROMPT-0007).
+Estado: Concluído localmente. Chrome: 112 verificações por skin; Edge: 50 de skins,
+30 combinações viewport/base/skin, persistência/reload, teclado e console limpo.
+Normal comparado pixel a pixel com CP-0013, desktop/mobile claro/escuro: diferença
+apenas no novo seletor. Cinco assets HTTP 200/decodificados; grifos preservados.
+SDK real inicializa sem conta/escrita. Safari/iOS físico, Tela de Início e conta
+real continuam pendentes. Sem push/deploy; detalhes e arquivos em CHANGE-0008.
+Árvore recebida limpa; tests/.artifacts ignorado e preservado.
+Assets localizados em Desktop/aranha_visual_extensao_v12/assets, fora do repo.
+Auditoria: HEAD recebido 2f1372281dee2ebaeaa9e9cb6b272876e73de917 só acrescenta
+registros e diagnóstico de teste; app.js/style.css idênticos a CP-0011. PROMPT-0007
+continua registrado como pendente; esta tarefa não implementa nem atesta seu pedido.
+Não existe manifest/service worker neste checkout; não criar PWA neste escopo.
+
 ## PROMPT-0007
 
 Data: 2026-09-23, 16:54:30 -03:00 (checkpoint inicial).

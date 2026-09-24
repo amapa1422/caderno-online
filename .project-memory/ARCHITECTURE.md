@@ -1,6 +1,6 @@
 ﻿# Arquitetura do Caderno Online
 
-Atualizada por PROMPT-0006 / CHANGE-0006 em 2026-09-23.
+Atualizada por PROMPT-0008 / CHANGE-0008 em 2026-09-24.
 
 ## Estrutura e interface
 
@@ -12,6 +12,25 @@ próprio, roteador, manifest ou service worker.
 Design_system.html é referência standalone. O produto incorpora seus tokens em
 style.css e usa componentes próprios, sem executar seu JS nem copiar seus dados.
 Ícones são SVGs no HTML; icone.png atende favicon e ícone Apple.
+
+Skins opcionais: visual-themes.js é um script clássico pequeno no head, antes
+dos stylesheets, sem importar app.js/Firebase. Aplica data-visual-theme cedo,
+valida preferência local e conecta somente change do select #visualTheme após
+DOMContentLoaded. Não altera data-theme nem eventos/estado do caderno. Bloqueio
+de localStorage é tolerado; ausência/valor inválido usa Normal. A preferência
+vale por origem/navegador e colore também o login no próximo acesso.
+visual-themes.css carrega após style.css e limita os overrides a spider/venom.
+Regras comuns estilizam exclusivamente o novo seletor junto ao botão claro/escuro.
+Body isolado somente nas skins; pseudo-elementos fixed com z-index -2/-1 e
+pointer-events:none ficam atrás do conteúdo. Workspace transparente revela o
+background; página quase opaca protege texto. Nenhum z-index existente muda.
+Fundos cover/center e SVGs em assets/themes/spider/, idênticos aos originais em
+Desktop/aranha_visual_extensao_v12/assets. PNGs ~1,75 MB cada, sem duplicatas;
+somente a skin ativa usa seu fundo. Decoração estática, inclusive reduced-motion.
+Sem background-attachment:fixed, efeitos de blur ou loops; safe areas preservadas.
+Marca-texto e suas variáveis/cores/transparência não recebem overrides. Tema
+claro/escuro continua independente, inclusive sua transparência original de grifo.
+Sem manifest/SW: não há novo mecanismo de cache/offline/PWA nesta implementação.
 
 Shell: sidebar, workspace e calendário. Sidebar flutuante até 900 px; calendário
 flutuante até 1180 px. Workspace ocupa explicitamente a segunda coluna da grade.

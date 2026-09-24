@@ -1,6 +1,6 @@
 # Problemas conhecidos
 
-Levantamento inicial no BASELINE-0001, atualizado por CHANGE-0006 em 2026-09-23.
+Levantamento inicial no BASELINE-0001, atualizado por CHANGE-0008 em 2026-09-24.
 Estados: `OPEN`, `INVESTIGATING`, `FIXED`, `WONTFIX`. Ao corrigir, preserve a entrada,
 marque `FIXED` e indique o CHANGE responsável e a validação.
 
@@ -153,6 +153,21 @@ Correção: Detectar intervalo integral e estender ao comprimento novo; manter
 ajuste por prefixo/sufixo somente para dados históricos parciais.
 Validação: Grifar, editar para acrescentar e depois substituir texto mantém
 todo o conteúdo grifado na mesma cor; persistência confirmada após reload.
+
+## Limites de validação em CHANGE-0008
+
+Sem novo defeito de produto confirmado. Chrome: 112 verificações por skin (336),
+mouse/toque, teclado, responsividade e console. Edge: 50 verificações de skins,
+30 combinações de viewport/modo/skin, reload/storage, contraste e console/rede.
+Comparação pixel a pixel Normal/CP-0013 em claro/escuro, desktop/mobile: somente
+novo seletor difere. Marca-texto e fontes preservados. SDK real inicializou sem
+login ou escrita remota. Testes e capturas em artefatos ignorados.
+Safari/iOS e modo Tela de Início/teclado físico não foram testados. Projeto sem
+manifest/SW/cache: skins não adicionam garantia de funcionamento offline nem PWA.
+Fundos estáticos fixed com pointer-events:none e safe areas existentes mantidas.
+Conta real, regras/sincronização e leitores de tela continuam pendentes.
+PROMPT-0007 segue pendente no histórico; produto recebido era igual a CP-0011,
+com apenas documentação/diagnóstico adicionais, preservados nesta tarefa.
 
 ## Limites de validação em CHANGE-0006
 

@@ -36,3 +36,25 @@ Pendente manual: conta de teste real (CRUD, concluir/desfazer e grifar), regras
 aceitando grifos/versaoGrifos, sincronização entre dispositivos, teclado físico
 mobile, Safari/iOS, fontes em outros sistemas e leitor de tela. Não utilize
 documentos importantes como fixtures.
+
+PROMPT-0008 — executar a regressão existente em cada skin:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/browser.ps1 -Skin normal
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/browser.ps1 -Skin spider
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/browser.ps1 -Skin venom
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/browser.ps1 -VisualThemes
+```
+
+-Skin seleciona pelo mesmo select do usuário antes da suíte de 112 verificações.
+-VisualThemes cobre 50 verificações de preferência/isolamento/cores/fontes/assets,
+30 combinações de tamanho/tema/skin, contraste de texto/legendas/botão nas skins,
+teclado real no select, reload de cada skin, escolha inválida e armazenamento
+bloqueado. Capturas de login, drawer, calendário, paleta e dialog; console/rede.
+Transições finitas são finalizadas somente no teste para medições estáveis.
+normal-comparison.ps1 lê index/style/app/color do CP-0013 para .artifacts/baseline,
+com firebase.mock.js explicitamente copiado, e compara pixels antes/depois no
+mesmo navegador em desktop/mobile, claro/escuro. Exclui somente o retângulo do
+novo seletor da comparação; não restaura nem modifica arquivos de produto.
+Para Edge, acrescente -BrowserPath com o caminho do msedge.exe. Safari/iOS físico
+e modo Tela de Início não são emulados por Chrome/Edge. Projeto sem manifest/SW.

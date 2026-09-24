@@ -3,6 +3,92 @@
 Adicione novas entradas no topo, após esta introdução. Preserve as anteriores;
 não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
+## CHANGE-0008
+
+Data: 2026-09-24. Hora inicial: 12:34:25 -03:00; validações finais: 12:51 -03:00.
+Prompt: PROMPT-0008. Inicial: CP-0013, `9f74409dd1329d1dcd34a75a1f1872355f77352f`.
+Final: CP-0014, `refs/tags/CP-0014` (hash registrado após criar a tag).
+CHANGE-0007 permanece reservado pelo pedido anterior, ainda pendente no histórico.
+
+### Objetivo
+
+Adicionar apenas as skins visuais nativas Normal, Homem-Aranha e Venom.
+As skins não alteram dados, Firebase ou lógica das anotações.
+
+### Arquivos adicionados
+
+- visual-themes.css e visual-themes.js.
+- assets/themes/spider/bg-classic-ai.png, bg-venom-ai.png,
+  web-pattern-classic.svg, web-pattern-venom.svg e spider-mark.svg.
+- tests/visual-theme-checks.js, visual-themes.ps1 e normal-comparison.ps1.
+- .project-memory/checkpoints/CP-0013.md e CP-0014.md.
+
+### Arquivos alterados
+
+index.html; tests/browser.ps1 e README.md; .project-memory/CURRENT_STATE.md,
+CHANGELOG.md, PROMPTS.md, DECISIONS.md, ARCHITECTURE.md e KNOWN_ISSUES.md.
+app.js, style.css, color.js, firebase.js, ícone e design_system.html inalterados.
+
+### Alterações realizadas / funcionalidades afetadas
+
+Seletor nativo discreto junto ao claro/escuro, sem aumentar altura do rodapé.
+data-visual-theme independente de data-theme; preferência caderno-visual-theme
+validada/aplicada no head antes do CSS. Valor inválido/armazenamento indisponível
+usa Normal; seleção funciona na visita mesmo sem conseguir persistir.
+CSS isolado por atributo; tokens de cor/superfície sem mudar geometria ou fontes.
+Normal sem regras de skin; única diferença visual é o novo seletor.
+Fundos fixos em pseudo-elementos atrás do conteúdo e pointer-events:none.
+Teias discretas, página quase opaca, drawers móveis opacos, sem alterar z-index
+de controles/dialog/picker/toast. Sem animação decorativa, filtros ou loops JS.
+Assets copiados intactos de Desktop/aranha_visual_extensao_v12/assets; PNGs
+1672x941, cerca de 1,75 MB cada. Sem APIs/código da extensão ou novos serviços.
+Marca-texto livre, transparência da tinta, fonte manuscrita, ações, login,
+calendário e salvamento preservados. DEC-0012 documenta a camada independente.
+
+### Possíveis impactos / contexto preservado
+
+Preferência local por navegador; não sincroniza entre aparelhos. Primeira carga
+de cada skin baixa seu PNG/SVG; sem duplicação de imagens nem garantia offline.
+O checkout não tem manifest/service worker: nenhum mecanismo PWA foi criado ou
+alterado, apesar da premissa do pedido. Não afirmar homologação Tela de Início.
+HEAD recebido 2f13722 só tinha registros de PROMPT-0007 e diagnóstico de teste;
+produto idêntico a CP-0011. Pedido anterior não foi implementado nem encerrado
+nesta tarefa. Sem rollback, migração, escrita remota, push ou deploy.
+
+### Testes realizados
+
+Chrome headless/CDP, Firebase simulado: suíte anterior antes da implementação e
+112 verificações em cada skin depois (336). Inclui login/erro, criar, editar,
+grifar/remover, concluir/desfazer, excluir/cancelar/falhar/retry, calendário,
+rascunhos, sessão e cores/reload. Mouse/toque no picker, nove larguras 320–1920
+nos dois modos base por skin, viewport 390x360, reduced-motion e console limpo.
+Skins: 50 verificações de HEX livre #22AACC, igualdade do background-image dos
+marks nas trocas, fontes, draft/data/editor, nenhuma escrita/exclusão/subscrição
+gerada pela skin, preferência, HTTP 200 e decodificação dos cinco assets.
+Matriz de 30 combinações: 1920x1080, 1440x900, 1280x720, 390x844 e 430x932,
+dois temas base e três skins. Sem overflow. Contraste de texto, legendas e botão
+principal nas skins >=4,5:1 (não é certificação WCAG de todos os componentes).
+Edge executou a suíte específica completa: 50 checks + matriz, select via
+teclado CDP, reload de três skins/tinta, aplicação no DOMContentLoaded, valor
+inválido, storage bloqueado, reduced-motion, assets/rede e console sem erros.
+Comparação pixel a pixel com arquivos CP-0013 copiados para artefatos ignorados
+e Firebase explicitamente simulado, mesmo Edge/perfil/fixtures: em 1440x900,
+3103 pixels diferentes somente dentro do novo seletor em cada modo; em 390x844,
+zero pixels diferentes no claro e escuro (sidebar recolhida). Nenhum pixel
+diferente fora do seletor nas quatro comparações. Sem restaurar código do repo.
+Capturas desktop/mobile/login/sidebar/calendário/picker/dialog inspecionadas.
+O teste foi ajustado para aguardar DOM assíncrono e finalizar transições finitas
+somente na medição, evitando falhas por capturas de estados intermediários.
+SDK real: -Live inicializou login/picker/app com console limpo, sem autenticar
+nem gravar Firestore. git diff --check aprovado; lógica/base CSS idênticos ao
+checkpoint; hashes dos PNGs iguais aos originais. Não houve teste físico iOS.
+
+### Resultado
+
+Concluído e validado localmente em Chrome/Edge com backend simulado. Safari/iOS,
+teclado real, Tela de Início, conta real/regras e sincronização ainda exigem teste
+manual. Checkpoints locais; memória e hashes finalizados no mesmo PROMPT-0008.
+
 ## CHANGE-0006
 
 Data: 2026-09-23. Hora inicial: 15:37:30 -03:00.

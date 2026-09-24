@@ -1,4 +1,4 @@
-param([switch]$Serve, [switch]$Live, [int]$Port = 8876, [string]$BrowserPath, [switch]$KeepOpen, [switch]$DiagnoseToggle)
+param([switch]$Serve, [switch]$Live, [int]$Port = 8876, [string]$BrowserPath, [switch]$KeepOpen, [switch]$DiagnoseToggle, [ValidateSet('normal','spider','venom')][string]$Skin = 'normal', [switch]$VisualThemes)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ($Serve) {
@@ -16,7 +16,7 @@ if ($Serve) {
                 if (-not $file.StartsWith($repoRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or $relative -match '(^|/)(\.git|\.project-memory)(/|$)' -or -not (Test-Path -LiteralPath $file -PathType Leaf)) {
                     $context.Response.StatusCode = 404
                 } else {
-                    $types = @{ '.html'='text/html; charset=utf-8'; '.js'='text/javascript; charset=utf-8'; '.css'='text/css; charset=utf-8'; '.png'='image/png' }
+                    $types = @{ '.html'='text/html; charset=utf-8'; '.js'='text/javascript; charset=utf-8'; '.css'='text/css; charset=utf-8'; '.png'='image/png'; '.svg'='image/svg+xml' }
                     $context.Response.ContentType = $types[[IO.Path]::GetExtension($file)]
                     $context.Response.Headers.Add('Cache-Control', 'no-store')
                     $bytes = [IO.File]::ReadAllBytes($file)
@@ -93,15 +93,19 @@ try {
     Invoke-CDP 'Runtime.enable' | Out-Null
     Invoke-CDP 'Log.enable' | Out-Null
     Invoke-CDP 'Page.enable' | Out-Null
+    Invoke-CDP 'Network.enable' | Out-Null
     Invoke-CDP 'Emulation.setDeviceMetricsOverride' @{ width=1440; height=1000; deviceScaleFactor=1; mobile=$false } | Out-Null
     Invoke-CDP 'Page.navigate' @{ url="http://127.0.0.1:$Port/" } | Out-Null
     Invoke-JS 'new Promise(resolve => { const check = () => document.readyState === "complete" ? resolve(true) : setTimeout(check, 50); check(); })' | Out-Null
-    if ($Live) {
+    if ($VisualThemes) {
+        . (Join-Path $PSScriptRoot 'visual-themes.ps1')
+    } elseif ($Live) {
         Start-Sleep -Seconds 5
         $result = Invoke-JS '({title:document.title,login:!document.getElementById("telaLogin").hidden,picker:!!document.getElementById("campoCor"),initialized:!!document.getElementById("tituloData").textContent})'
         Write-Output ($result | ConvertTo-Json -Compress)
         if (-not $result.login -or -not $result.initialized -or -not $result.picker) { throw 'Inicializacao real incompleta.' }
     } else {
+        Invoke-JS ('document.getElementById("visualTheme").value="' + $Skin + '";document.getElementById("visualTheme").dispatchEvent(new Event("change"))') | Out-Null
         $checks = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'browser-checks.js'))
         $result = Invoke-JS ('(' + $checks + ')()')
         $result | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $artifactDir 'functional.json') -Encoding UTF8

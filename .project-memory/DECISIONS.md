@@ -5,6 +5,28 @@ o status da antiga para `Substituída por DEC-XXXX`, sem apagar seu contexto.
 As razões originais das escolhas de código anteriores à memória não são conhecidas;
 observações do baseline estão identificadas como tal.
 
+## DEC-0012
+
+Título: Skins nativas opcionais e independentes do tema claro/escuro e dos dados.
+Status: Ativa. Complementa decisões anteriores, sem substituir sua lógica.
+Data: 2026-09-24. Origem: PROMPT-0008 / CHANGE-0008.
+Decisão: data-visual-theme normal/spider/venom, preferência local
+caderno-visual-theme aplicada por visual-themes.js no head antes do CSS. Normal
+não recebe regras de skin. Somente o seletor novo usa regras próprias comuns.
+Seletor nativo junto ao controle claro/escuro, sem aumentar a altura do rodapé.
+Tokens de cor/superfície isolados em visual-themes.css, preservando dimensões,
+fontes, --highlight, --marker-opacity, z-indexes e todos os eventos existentes.
+Fundos e SVGs originais copiados da extensão sem código/APIs chrome.*. Camadas
+body::before/after fixas, negativas, pointer-events:none, com isolation no body
+somente das skins. Conteúdo legível em superfícies quase opacas; drawers móveis
+opacos. Sem animação decorativa, filtros, intervalos, Canvas ou dependências.
+Armazenamento indisponível: Normal na carga, escolha funciona durante a visita.
+Sem sincronização da skin entre contas/aparelhos ou escrita Firestore. Tema
+persistido também colore login, sem modificar seus campos ou Auth.
+Não criar manifest/SW/cache: inexistem neste checkout, apesar da premissa do pedido.
+Não prometer offline/PWA ou homologação Safari/iOS sem validação física.
+Arquivos: index.html, visual-themes.js/css, assets/themes/spider/, tests/.
+
 ## DEC-0011
 
 Título: Marca-texto por anotação inteira, usando cor global selecionada no topo.

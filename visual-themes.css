@@ -1,0 +1,122 @@
+/* NORMAL: no skin overrides. Only the new appearance control has shared rules.
+   Existing spacing, typography, layout, highlighting and z-indexes live in style.css. */
+.appearance-controls { display: flex; align-items: center; }
+.appearance-controls > [data-theme-toggle] { flex: 1; width: auto; min-width: 0; }
+.appearance-picker { position: relative; display: grid; flex: 0 0 112px; min-width: 0; height: 40px; color: var(--text-muted); font-size: 10px; }
+.appearance-picker > span { padding-left: 6px; }
+.appearance-picker select { width: 100%; min-width: 0; height: 26px; padding: 0 2px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--input-bg); color: var(--text); font-size: 12px; cursor: pointer; }
+
+/* SPIDER: only color/surface tokens; never override --highlight or marker tokens. */
+html[data-visual-theme="spider"] {
+  --app-bg: #08111e;
+  --sidebar-bg: rgba(8, 17, 30, .88);
+  --sidebar-hover: rgba(96, 165, 250, .13);
+  --panel-bg: rgba(13, 24, 41, .94);
+  --panel-muted: #13233a;
+  --elevated: #132238;
+  --input-bg: rgba(8, 17, 30, .94);
+  --text-strong: #f8fbff;
+  --text: #e2ebf7;
+  --text-muted: #c1d0e5;
+  --text-faint: #8195b1;
+  --border: rgba(96, 165, 250, .25);
+  --border-strong: #526f95;
+  --accent-50: #12243e;
+  --accent-100: #193253;
+  --accent-300: #a7caff;
+  --accent-400: #8ebdff;
+  --accent-500: #ef233c;
+  --accent-600: #9ec5ff;
+  --accent-700: #b11226;
+  --selection: rgba(24, 100, 255, .25);
+  --grid-line: rgba(96, 165, 250, .13);
+  --visual-background: url('./assets/themes/spider/bg-classic-ai.png');
+  --visual-web: url('./assets/themes/spider/web-pattern-classic.svg');
+  --visual-overlay: rgba(8, 17, 30, .28);
+  --visual-paper: rgba(13, 24, 41, .96);
+  --visual-button-text: #ffffff;
+}
+
+/* VENOM: neutral black, white and silver; semantic error/success colors remain. */
+html[data-visual-theme="venom"] {
+  --app-bg: #090b0f;
+  --sidebar-bg: rgba(9, 11, 15, .9);
+  --sidebar-hover: rgba(255, 255, 255, .09);
+  --panel-bg: rgba(18, 21, 28, .95);
+  --panel-muted: #1c2029;
+  --elevated: #1c2029;
+  --input-bg: rgba(9, 11, 15, .95);
+  --text-strong: #f4f7fb;
+  --text: #e0e5ed;
+  --text-muted: #b9c2d0;
+  --text-faint: #8793a4;
+  --border: rgba(255, 255, 255, .15);
+  --border-strong: #616b7b;
+  --accent-50: #15191f;
+  --accent-100: #222731;
+  --accent-300: #ffffff;
+  --accent-400: #e6eaf0;
+  --accent-500: #d8e0eb;
+  --accent-600: #e6eaf0;
+  --accent-700: #e6eaf0;
+  --selection: rgba(255, 255, 255, .13);
+  --grid-line: rgba(255, 255, 255, .1);
+  --visual-background: url('./assets/themes/spider/bg-venom-ai.png');
+  --visual-web: url('./assets/themes/spider/web-pattern-venom.svg');
+  --visual-overlay: rgba(9, 11, 15, .28);
+  --visual-paper: rgba(18, 21, 28, .97);
+  --visual-button-text: #090b0f;
+}
+
+/* Shared skin finish. Explicit opt-in keeps Normal identical to its base CSS. */
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) {
+  color-scheme: dark;
+  --danger: #f28c8c;
+  --overlay: rgba(0, 0, 0, .6);
+}
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body { isolation: isolate; }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::before,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::before {
+  z-index: -2;
+  background-image: linear-gradient(var(--visual-overlay), var(--visual-overlay)), var(--visual-background);
+}
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::after {
+  z-index: -1;
+  background-image: var(--visual-web);
+  opacity: .15;
+}
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .workspace { background: transparent; }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .journal-page { background: var(--visual-paper); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .note-topbar,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .login-form-pane { background: var(--panel-bg); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .btn-primary,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .btn-primary:hover,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .brand-mark { color: var(--visual-button-text); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .eyebrow { color: var(--accent-400); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .complete-button { color: #86cfa0; }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .note-row.done .complete-button { color: #86efac; }
+html[data-visual-theme="spider"] .appearance-picker > span {
+  padding-left: 20px;
+  background: url('./assets/themes/spider/spider-mark.svg') 5px center / 12px 12px no-repeat;
+}
+
+/* RESPONSIVE: preserve drawer geometry, safe areas and the existing layer order.
+   Nearly opaque mobile drawers keep text from showing through over other text. */
+@media (max-width: 1180px) {
+  html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .agenda-panel { background: var(--elevated); }
+}
+@media (max-width: 900px) {
+  html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .sidebar { background: var(--elevated); }
+}
+
+/* REDUCED MOTION: decoration is static for everyone, including reduced motion.
+   No filters, background-attachment:fixed, canvas, intervals or animation loops. */
