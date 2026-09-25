@@ -9,17 +9,11 @@
   <title>Caderno Online</title>
   <link rel="icon" type="image/png" href="./icone.png">
   <link rel="apple-touch-icon" href="./icone.png">
-  <script>
-    (() => {
-      let theme;
-      try { theme = localStorage.getItem('caderno-theme'); } catch {}
-      document.documentElement.dataset.theme = ['light', 'dark'].includes(theme)
-        ? theme : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    })();
-  </script>
+  <script src="./appearance.js"></script>
   <script src="./visual-themes.js"></script>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./visual-themes.css">
+  <link rel="stylesheet" href="./appearance.css">
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -79,8 +73,12 @@
       <nav id="listaPaginas" class="pages-nav" aria-labelledby="tituloPaginas"></nav>
       <footer class="sidebar-footer">
         <div class="appearance-controls">
-          <button class="nav-item" type="button" data-theme-toggle><svg class="icon"><use href="#i-moon"/></svg><span data-theme-label>Modo escuro</span></button>
-          <label class="appearance-picker" for="visualTheme"><span>Aparência</span><select id="visualTheme" aria-label="Aparência"><option value="normal">Normal</option><option value="spider">Homem-Aranha</option><option value="venom">Venom</option><option value="espetacular">Espetacular-Homem Aranha</option><option value="santos">Santos</option><option value="flamengo">Flamengo</option><option value="sao-paulo">São Paulo</option><option value="bolsonaro">Bolsonaro</option></select></label>
+          <label class="appearance-picker appearance-mode" for="appearanceMode"><span>Aparência</span><select id="appearanceMode"><option value="light">Claro</option><option value="dark">Escuro</option><option value="liquid-glass">Liquid Glass</option></select></label>
+          <label class="appearance-picker" for="visualTheme"><span>Tema</span><select id="visualTheme" aria-label="Tema"><option value="normal">Normal</option><option value="spider">Homem-Aranha</option><option value="venom">Venom</option><option value="espetacular">Espetacular-Homem Aranha</option><option value="santos">Santos</option><option value="flamengo">Flamengo</option><option value="sao-paulo">São Paulo</option><option value="bolsonaro">Bolsonaro</option></select></label>
+        </div>
+        <div id="glassControls" class="glass-controls" hidden>
+          <label for="glassIntensity">Intensidade do vidro <output id="glassIntensityValue" for="glassIntensity">60</output></label>
+          <input id="glassIntensity" type="range" min="0" max="100" step="1" value="60">
         </div>
         <div class="account"><span class="avatar" id="avatarUsuario" aria-hidden="true">C</span><div><strong id="nomeUsuario">Meu caderno</strong><span id="emailUsuario"></span></div><button id="btnSair" class="icon-button" type="button" aria-label="Sair da conta" data-tooltip="Sair"><svg class="icon"><use href="#i-logout"/></svg></button></div>
       </footer>

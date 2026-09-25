@@ -631,25 +631,11 @@ document.addEventListener("keydown", event => {
 });
 for (const media of [mobileSidebar, floatingAgenda]) media.addEventListener("change", () => { fecharPainel(false); atualizarPaineis(); });
 window.addEventListener("resize", posicionarPaleta, { passive: true });
-function aplicarTema(theme) {
-  document.documentElement.dataset.theme = theme;
-  document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#1f1f1f" : "#ffffff";
-  document.querySelectorAll("[data-theme-toggle]").forEach(button => {
-    button.setAttribute("aria-label", theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro");
-    button.querySelector("use").setAttribute("href", theme === "dark" ? "#i-sun" : "#i-moon");
-  });
-  document.querySelectorAll("[data-theme-label]").forEach(label => { label.textContent = theme === "dark" ? "Modo claro" : "Modo escuro"; });
-}
-document.querySelectorAll("[data-theme-toggle]").forEach(button => button.addEventListener("click", () => {
-  const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; preference("caderno-theme", theme); aplicarTema(theme);
-}));
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", event => { if (!preference("caderno-theme")) aplicarTema(event.matches ? "dark" : "light"); });
 window.addEventListener("online", atualizarStatus);
 window.addEventListener("offline", atualizarStatus);
 window.addEventListener("beforeunload", event => {
   if (state.pending || [...state.drafts.values()].some(value => value.trim()) || (state.editing && state.editing.value.trim() !== state.editing.savedText)) { event.preventDefault(); event.returnValue = ""; }
 });
-aplicarTema(document.documentElement.dataset.theme);
 atualizarAmostra(); atualizarViewport();
 atualizarPaineis();
 renderizar();

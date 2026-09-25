@@ -1,0 +1,111 @@
+/* Appearance controls share the existing footer row; wallpaper options stay separate. */
+.appearance-controls { gap: 8px; }
+.appearance-controls > .appearance-mode { flex: 1; }
+.glass-controls { margin-top: 8px; color: var(--text-muted); font-size: 11px; }
+.glass-controls label { display: flex; justify-content: space-between; gap: 8px; }
+.glass-controls output { font-variant-numeric: tabular-nums; }
+.glass-controls input { display: block; width: 100%; min-width: 0; height: 28px; margin: 0; accent-color: var(--accent-400); cursor: pointer; }
+
+/* Every surface override is opt-in. Light/dark and wallpaper files stay untouched.
+   More opaque defaults are the fallback for browsers without backdrop filtering. */
+html[data-appearance="liquid-glass"] {
+  --glass-tint: 9, 18, 31;
+  --glass-contrast-boost: 0;
+  --glass-opacity: .86;
+  --glass-paper-opacity: .88;
+  --glass-modal-opacity: .9;
+  --glass-input-opacity: calc(.6 - .16 * var(--glass-level, .6));
+  --glass-blur: calc(8px + 12px * var(--glass-level, .6));
+  --glass-saturation: calc(110% + 35% * var(--glass-level, .6));
+  --glass-border-opacity: calc(.12 + .1 * var(--glass-level, .6));
+  --glass-highlight: calc(.02 + .045 * var(--glass-level, .6));
+  --glass-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, var(--glass-border-opacity)), inset 0 -1px 0 rgba(255, 255, 255, .035);
+  --glass-reflection: linear-gradient(135deg, rgba(255, 255, 255, var(--glass-highlight)), rgba(255, 255, 255, .005) 52%, rgba(255, 255, 255, .015));
+  --glass-surface: rgba(var(--glass-tint), var(--glass-opacity));
+  --app-bg: #101724;
+  --sidebar-bg: var(--glass-surface);
+  --panel-bg: var(--glass-surface);
+  --panel-muted: rgba(var(--glass-tint), .42);
+  --elevated: rgba(var(--glass-tint), var(--glass-modal-opacity));
+  --input-bg: rgba(var(--glass-tint), var(--glass-input-opacity));
+  --visual-paper: rgba(var(--glass-tint), var(--glass-paper-opacity));
+  --visual-overlay: rgba(0, 0, 0, .08);
+  --text-strong: #ffffff;
+  --text: #f4f7fc;
+  --text-muted: #e0e9f4;
+  --text-faint: #bccbdd;
+  --border: rgba(255, 255, 255, var(--glass-border-opacity));
+  --border-strong: rgba(255, 255, 255, .32);
+  --sidebar-hover: rgba(255, 255, 255, .1);
+  --overlay: rgba(0, 0, 0, .24);
+  color-scheme: dark;
+}
+
+/* Known bright artwork gets a slightly stronger tint, without changing the art. */
+html[data-appearance="liquid-glass"]:is([data-visual-theme="santos"], [data-visual-theme="sao-paulo"]) {
+  --glass-contrast-boost: .04;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-appearance="liquid-glass"] {
+    --glass-opacity: max(.64, calc(.8 - .22 * var(--glass-level, .6) + var(--glass-contrast-boost)));
+    --glass-paper-opacity: max(.66, calc(.82 - .2 * var(--glass-level, .6) + var(--glass-contrast-boost)));
+    --glass-modal-opacity: calc(.8 - .1 * var(--glass-level, .6));
+  }
+}
+
+/* Blur only major visible containers and floating surfaces, never every child.
+   No pseudo-element intercepts events or competes with the page-turn animation. */
+html[data-appearance="liquid-glass"] :is(.sidebar, .agenda-panel, .journal-page, .note-topbar, .date-navigation, .login-story, .login-form-pane, .delete-dialog, .marker-palette, .toast) {
+  background: var(--glass-reflection), var(--glass-surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  border-color: var(--border);
+  box-shadow: var(--glass-edge), var(--glass-shadow);
+}
+html[data-appearance="liquid-glass"] .workspace { background: transparent; }
+html[data-appearance="liquid-glass"] .journal-page {
+  background: var(--glass-reflection), var(--visual-paper);
+  /* Inset outline adds a glass edge without changing panel dimensions. */
+  outline: 1px solid var(--border);
+  outline-offset: -1px;
+  border-radius: var(--radius-md);
+}
+html[data-appearance="liquid-glass"] :is(.delete-dialog, .marker-palette, .toast) {
+  background: var(--glass-reflection), var(--elevated);
+}
+html[data-appearance="liquid-glass"] :is(.input, .composer textarea, .inline-editor, .search-field, .appearance-picker select) {
+  background: var(--glass-reflection), var(--input-bg);
+  border-color: var(--border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+  color: var(--text-strong);
+}
+html[data-appearance="liquid-glass"] :is(.input, .composer textarea, .inline-editor, .appearance-picker select):focus {
+  border-color: rgba(255, 255, 255, .6);
+  outline: 2px solid var(--selection);
+  outline-offset: 1px;
+}
+html[data-appearance="liquid-glass"] .search-field:focus-within { border-color: rgba(255, 255, 255, .6); }
+html[data-appearance="liquid-glass"] :is(input, textarea)::placeholder { color: var(--text-muted); opacity: 1; }
+html[data-appearance="liquid-glass"] select option { background: #101724; color: #f4f7fc; }
+html[data-appearance="liquid-glass"] .btn:not(.btn-primary):not(.btn-danger):not(.btn-ghost) {
+  background: var(--input-bg);
+  border-color: var(--border);
+  box-shadow: var(--glass-edge);
+}
+/* Tooltips keep a stable, readable tint without creating more blur layers. */
+html[data-appearance="liquid-glass"] [data-tooltip]::after { background: rgba(var(--glass-tint), .9); }
+@media (hover: hover) {
+  html[data-appearance="liquid-glass"] .page-link:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-appearance="liquid-glass"] .delete-dialog[open] { animation: pop-in 150ms var(--ease-enter); }
+}
+@media (max-width: 900px) {
+  html[data-appearance="liquid-glass"] {
+    --glass-blur: calc(5px + 7px * var(--glass-level, .6));
+    --glass-shadow: 0 6px 18px rgba(0, 0, 0, .16);
+    --glass-highlight: calc(.015 + .025 * var(--glass-level, .6));
+  }
+}

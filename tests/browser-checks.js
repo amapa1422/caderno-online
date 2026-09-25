@@ -212,7 +212,8 @@ async function () {
     assert($('listaPaginas').querySelectorAll('.page-link').length === 1 && $('listaPaginas').querySelector('[data-date="2024-02-29"]'), 'search: matches actual historical content');
     input('buscaPaginas', '');
     const originalTheme = document.documentElement.dataset.theme;
-    document.querySelector('.sidebar [data-theme-toggle]').click();
+    $('appearanceMode').value = originalTheme === 'dark' ? 'light' : 'dark';
+    $('appearanceMode').dispatchEvent(new Event('change', { bubbles: true }));
     assert(document.documentElement.dataset.theme !== originalTheme && localStorage.getItem('caderno-theme') === document.documentElement.dataset.theme, 'theme: toggle and persistence');
     $('sidebarToggle').click(); assert($('sidebar').inert && $('sidebarToggle').getAttribute('aria-expanded') === 'false', 'sidebar: desktop collapse accessible');
     $('sidebarToggle').click(); $('agendaToggle').click(); assert($('agenda').inert, 'agenda: desktop collapse'); $('agendaToggle').click();

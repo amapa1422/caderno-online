@@ -1,9 +1,9 @@
-# Same browser, fixtures, viewport and motion settings, before/after CP-0015.
+# Same browser, fixtures, viewport and motion settings, before/after CP-0017.
 # Baseline product files are read from Git into ignored test artifacts; no restore.
 $baselineDir = Join-Path $artifactDir 'baseline'
 New-Item -ItemType Directory -Force -Path $baselineDir | Out-Null
 foreach ($name in @('index.html','style.css','app.js','color.js','accounts.js','visual-themes.js','visual-themes.css')) {
-    $source = git -C $repoRoot show "CP-0015:$name"
+    $source = git -C $repoRoot show "CP-0017:$name"
     if ($LASTEXITCODE -ne 0) { throw "Unable to read baseline $name" }
     [IO.File]::WriteAllText((Join-Path $baselineDir $name), ($source -join "`n"), [Text.UTF8Encoding]::new($false))
 }
@@ -43,7 +43,7 @@ foreach ($size in @(@(1440,900),@(390,844))) {
             $shot = Invoke-CDP 'Page.captureScreenshot' @{format='png';captureBeyondViewport=$false}
             [IO.File]::WriteAllBytes((Join-Path $artifactDir "normal-$version-$($size[0])-$mode.png"),[Convert]::FromBase64String($shot.data))
             if ($version -eq 'after') {
-                $rect = Invoke-JS '(()=>{const r=document.querySelector(".appearance-picker").getBoundingClientRect();return {left:Math.floor(r.left)-1,top:Math.floor(r.top)-1,right:Math.ceil(r.right)+1,bottom:Math.ceil(r.bottom)+1}})()'
+                $rect = Invoke-JS '(()=>{const r=document.querySelector(".appearance-controls").getBoundingClientRect();return {left:Math.floor(r.left)-1,top:Math.floor(r.top)-1,right:Math.ceil(r.right)+1,bottom:Math.ceil(r.bottom)+1}})()'
             }
         }
         $diff = [NormalPixelDiff]::Compare((Join-Path $artifactDir "normal-before-$($size[0])-$mode.png"),(Join-Path $artifactDir "normal-after-$($size[0])-$mode.png"),$rect.left,$rect.top,$rect.right,$rect.bottom)
@@ -54,4 +54,4 @@ foreach ($size in @(@(1440,900),@(390,844))) {
 }
 $comparisons | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $artifactDir 'normal-comparison.json') -Encoding UTF8
 if (@($comparisons | Where-Object outsideAppearancePicker -gt 0).Count) { throw 'Normal differs outside the new appearance control. Inspect saved before/after images.' }
-Write-Output 'NORMAL_PIXELS=PASS (CP-0015 vs current, light/dark, desktop/mobile; only appearance control differs)'
+Write-Output 'NORMAL_PIXELS=PASS (CP-0017 vs current, light/dark, desktop/mobile; only appearance control differs)'

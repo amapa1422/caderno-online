@@ -5,6 +5,24 @@ rollback. Os checkpoints são referências Git reais, confirmadas com
 `git rev-parse 'CP-XXXX^{commit}'`. O histórico anterior à instalação existe no
 Git, mas seus prompts não foram fornecidos e não recebem IDs inventados.
 
+## PROMPT-0010
+
+Data: 2026-09-25. CHANGE-0010.
+Pedido: adicionar Liquid Glass como terceira APARENCIA, separada das oito categorias
+de wallpaper. Vidro translucido nos paineis, inputs e flutuantes, reflexo sutil,
+blur limitado, fallback sem backdrop-filter, reduced-motion e intensidade 0-100
+(default 60) persistida. Preservar Claro/Escuro, imagens, temas, fontes/grifos,
+CRUD, calendario, login, contas e Firebase. Sem biblioteca, canvas ou efeitos pesados.
+Inicial: CP-0017, bbcc050163bf98ea03b4769704aacb60e3071c31.
+Final: pendente. Estado: em andamento.
+Base: GitHub HEAD/main b57aa73 confirmado novamente. HEAD local 4450385 contem
+PROMPT-0009 ainda nao publicado; preservado por exigencia de manter os oito temas.
+Arvore limpa, somente tests/.artifacts ignorado preexistente preservado.
+Trecho: "NÃO faça commit antes de validar que o projeto continua funcional."
+Atendimento: executada regressao Chrome -Skin normal ANTES do checkpoint inicial;
+112 checks, mouse/toque, nove larguras x dois modos, viewport curto e console limpo.
+Nenhuma modificacao de produto antes dessa validacao. Checkpoint final somente
+apos validar tambem a implementacao. Sem push/deploy ou dados remotos.
 ## PROMPT-0009
 
 Data: 2026-09-25.

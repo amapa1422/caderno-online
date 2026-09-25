@@ -1,4 +1,4 @@
-param([switch]$Serve, [switch]$Live, [int]$Port = 8876, [string]$BrowserPath, [switch]$KeepOpen, [switch]$DiagnoseToggle, [ValidateSet('normal','spider','venom','espetacular','santos','flamengo','sao-paulo','bolsonaro')][string]$Skin = 'normal', [switch]$VisualThemes)
+param([switch]$Serve, [switch]$Live, [int]$Port = 8876, [string]$BrowserPath, [switch]$KeepOpen, [switch]$DiagnoseToggle, [ValidateSet('normal','spider','venom','espetacular','santos','flamengo','sao-paulo','bolsonaro')][string]$Skin = 'normal', [switch]$VisualThemes, [switch]$Glass, [ValidateSet('light','dark','liquid-glass','')][string]$Appearance = '')
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ($Serve) {
@@ -97,10 +97,15 @@ try {
     Invoke-CDP 'Log.enable' | Out-Null
     Invoke-CDP 'Page.enable' | Out-Null
     Invoke-CDP 'Network.enable' | Out-Null
+    if ($Appearance) {
+        Invoke-CDP 'Page.addScriptToEvaluateOnNewDocument' @{source=('localStorage.setItem("caderno-theme","' + $Appearance + '");')} | Out-Null
+    }
     Invoke-CDP 'Emulation.setDeviceMetricsOverride' @{ width=1440; height=1000; deviceScaleFactor=1; mobile=$false } | Out-Null
     Invoke-CDP 'Page.navigate' @{ url="http://127.0.0.1:$Port/" } | Out-Null
     Invoke-JS 'new Promise(resolve => { const check = () => document.readyState === "complete" ? resolve(true) : setTimeout(check, 50); check(); })' | Out-Null
-    if ($VisualThemes) {
+    if ($Glass) {
+        . (Join-Path $PSScriptRoot 'glass.ps1')
+    } elseif ($VisualThemes) {
         . (Join-Path $PSScriptRoot 'visual-themes.ps1')
     } elseif ($Live) {
         Start-Sleep -Seconds 5
