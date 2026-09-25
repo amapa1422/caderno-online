@@ -2,7 +2,7 @@
 (() => {
   const key = 'caderno-visual-theme';
   const root = document.documentElement;
-  const normalize = value => ['spider', 'venom'].includes(value) ? value : 'normal';
+  const normalize = value => ['spider', 'venom', 'espetacular', 'santos', 'flamengo', 'sao-paulo', 'bolsonaro'].includes(value) ? value : 'normal';
   let saved;
   try { saved = localStorage.getItem(key); } catch { /* Storage may be unavailable. */ }
   root.dataset.visualTheme = normalize(saved);

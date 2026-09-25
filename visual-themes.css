@@ -7,7 +7,9 @@
 .appearance-picker select { width: 100%; min-width: 0; height: 26px; padding: 0 2px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--input-bg); color: var(--text); font-size: 12px; cursor: pointer; }
 
 /* SPIDER: only color/surface tokens; never override --highlight or marker tokens. */
-html[data-visual-theme="spider"] {
+html[data-visual-theme="spider"],
+html[data-visual-theme="espetacular"],
+html[data-visual-theme="flamengo"] {
   --app-bg: #08111e;
   --sidebar-bg: rgba(8, 17, 30, .88);
   --sidebar-hover: rgba(96, 165, 250, .13);
@@ -38,7 +40,9 @@ html[data-visual-theme="spider"] {
 }
 
 /* VENOM: neutral black, white and silver; semantic error/success colors remain. */
-html[data-visual-theme="venom"] {
+html[data-visual-theme="venom"],
+html[data-visual-theme="santos"],
+html[data-visual-theme="sao-paulo"] {
   --app-bg: #090b0f;
   --sidebar-bg: rgba(9, 11, 15, .9);
   --sidebar-hover: rgba(255, 255, 255, .09);
@@ -68,15 +72,72 @@ html[data-visual-theme="venom"] {
   --visual-button-text: #090b0f;
 }
 
+/* Variants reuse the original palettes above; only their artwork changes.
+   Team backgrounds do not inherit the decorative spider webs. */
+html[data-visual-theme="espetacular"] {
+  --visual-background: url('./assets/themes/categories/espetacular.png');
+}
+html[data-visual-theme="santos"] {
+  --visual-background: url('./assets/themes/categories/santos.png');
+  --visual-web: none;
+}
+html[data-visual-theme="flamengo"] {
+  --visual-background: url('./assets/themes/categories/flamengo.png');
+  --visual-web: none;
+}
+html[data-visual-theme="sao-paulo"] {
+  --visual-background: url('./assets/themes/categories/sao-paulo.png');
+  --visual-web: none;
+}
+
+/* Brazil palette: readable dark green surfaces, golden actions and blue accents.
+   Highlight, status colors, typography and component geometry stay independent. */
+html[data-visual-theme="bolsonaro"] {
+  --app-bg: #071a14;
+  --sidebar-bg: rgba(7, 26, 20, .9);
+  --sidebar-hover: rgba(248, 213, 88, .12);
+  --panel-bg: rgba(12, 33, 27, .95);
+  --panel-muted: #173d30;
+  --elevated: #15392d;
+  --input-bg: rgba(7, 26, 20, .96);
+  --text-strong: #f8fff9;
+  --text: #e3efe7;
+  --text-muted: #bacfbe;
+  --text-faint: #8eac98;
+  --border: rgba(248, 213, 88, .22);
+  --border-strong: #658873;
+  --accent-50: #102e25;
+  --accent-100: #204535;
+  --accent-300: #ffeca0;
+  --accent-400: #f8d558;
+  --accent-500: #e8c547;
+  --accent-600: #f8d558;
+  --accent-700: #f8d558;
+  --selection: rgba(65, 132, 224, .3);
+  --grid-line: rgba(143, 187, 158, .12);
+  --visual-background: url('./assets/themes/categories/bolsonaro.png');
+  --visual-web: radial-gradient(ellipse at 12% 25%, rgba(248, 213, 88, .35), transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(54, 120, 212, .3), transparent 55%);
+  --visual-overlay: rgba(7, 26, 20, .32);
+  --visual-paper: rgba(12, 33, 27, .97);
+  --visual-button-text: #071a14;
+}
+
+/* Photograph highlights must not reduce the contrast of day navigation.
+   Add only a surface color; preserve the existing spacing and dimensions. */
+html:is([data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .date-navigation {
+  background: var(--panel-bg);
+}
+
 /* Shared skin finish. Explicit opt-in keeps Normal identical to its base CSS. */
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) {
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) {
   color-scheme: dark;
   --danger: #f28c8c;
   --overlay: rgba(0, 0, 0, .6);
 }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body { isolation: isolate; }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::before,
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::after {
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) body { isolation: isolate; }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) body::before,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) body::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -85,26 +146,27 @@ html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::after {
   background-size: cover;
   background-repeat: no-repeat;
 }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::before {
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) body::before {
   z-index: -2;
   background-image: linear-gradient(var(--visual-overlay), var(--visual-overlay)), var(--visual-background);
 }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) body::after {
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) body::after {
   z-index: -1;
   background-image: var(--visual-web);
   opacity: .15;
 }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .workspace { background: transparent; }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .journal-page { background: var(--visual-paper); }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .note-topbar,
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .login-form-pane { background: var(--panel-bg); }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .btn-primary,
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .btn-primary:hover,
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .brand-mark { color: var(--visual-button-text); }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .eyebrow { color: var(--accent-400); }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .complete-button { color: #86cfa0; }
-html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .note-row.done .complete-button { color: #86efac; }
-html[data-visual-theme="spider"] .appearance-picker > span {
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .workspace { background: transparent; }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .journal-page { background: var(--visual-paper); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .note-topbar,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .login-form-pane { background: var(--panel-bg); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .btn-primary,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .btn-primary:hover,
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .brand-mark { color: var(--visual-button-text); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .eyebrow { color: var(--accent-400); }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .complete-button { color: #86cfa0; }
+html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .note-row.done .complete-button { color: #86efac; }
+html[data-visual-theme="spider"] .appearance-picker > span,
+html[data-visual-theme="espetacular"] .appearance-picker > span {
   padding-left: 20px;
   background: url('./assets/themes/spider/spider-mark.svg') 5px center / 12px 12px no-repeat;
 }
@@ -112,11 +174,20 @@ html[data-visual-theme="spider"] .appearance-picker > span {
 /* RESPONSIVE: preserve drawer geometry, safe areas and the existing layer order.
    Nearly opaque mobile drawers keep text from showing through over other text. */
 @media (max-width: 1180px) {
-  html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .agenda-panel { background: var(--elevated); }
+  html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .agenda-panel { background: var(--elevated); }
 }
 @media (max-width: 900px) {
-  html:is([data-visual-theme="spider"], [data-visual-theme="venom"]) .sidebar { background: var(--elevated); }
+  html:is([data-visual-theme="spider"], [data-visual-theme="venom"], [data-visual-theme="espetacular"], [data-visual-theme="santos"], [data-visual-theme="flamengo"], [data-visual-theme="sao-paulo"], [data-visual-theme="bolsonaro"]) .sidebar { background: var(--elevated); }
 }
 
-/* REDUCED MOTION: decoration is static for everyone, including reduced motion.
-   No filters, background-attachment:fixed, canvas, intervals or animation loops. */
+/* One subtle, compositor-friendly glow behind all content, only for this skin.
+   Static by default: reduced motion never creates a decorative animation. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-visual-theme="bolsonaro"] body::after {
+    animation: brazil-glow 12s ease-in-out infinite alternate;
+  }
+}
+@keyframes brazil-glow {
+  from { opacity: .12; }
+  to { opacity: .3; }
+}
