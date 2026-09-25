@@ -7,7 +7,7 @@ não substitua uma mudança antiga por outra. Datas usam America/Sao_Paulo.
 
 Data: 2026-09-25. PROMPT-0009.
 Inicial: CP-0015, ad3490ec58ee93570c63c1d21299ab87f2c767d5.
-Final: refs/tags/CP-0016 (hash literal em commit complementar).
+Final: 387733c580bc536e9ce0ebed6786b1a9db3caa6c (refs/tags/CP-0016) Hash literal registrado em commit complementar de metadados, sem mover a tag.
 Base: b57aa73f69e0d72da514fbc069e54e291565f555, HEAD/main do GitHub consultado.
 
 ### Objetivo e resultado

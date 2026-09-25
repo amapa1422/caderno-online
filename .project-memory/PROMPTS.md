@@ -17,7 +17,7 @@ animacao leve, sem interferir na leitura. Sem Firebase, backend, push ou deploy.
 Complemento: oito imagens anexadas; cinco artes identificadas pelo conteudo
 (indices 1, 5, 6, 7, 8); indices 2, 3 e 4 sao capturas de referencia do aplicativo.
 Inicial: CP-0015, ad3490ec58ee93570c63c1d21299ab87f2c767d5.
-Final: refs/tags/CP-0016. CHANGE-0009. Estado: Concluido localmente; 129 checks de skins, 80 combinacoes de layout, 112 checks funcionais, reload, contraste e console limpo. Normal idêntico em quatro comparacoes de pixels. Firebase real/Safari/iOS pendentes; sem push/deploy.
+Final: 387733c580bc536e9ce0ebed6786b1a9db3caa6c (refs/tags/CP-0016). CHANGE-0009. Estado: Concluido localmente; 129 checks de skins, 80 combinacoes de layout, 112 checks funcionais, reload, contraste e console limpo. Normal idêntico em quatro comparacoes de pixels. Firebase real/Safari/iOS pendentes; sem push/deploy.
 Base: b57aa73f69e0d72da514fbc069e54e291565f555 confirmado por git ls-remote origin.
 Arvore inicial limpa, sem arquivos ignorados. Memoria e testes removidos em b57aa73
 recuperados de ac8158f; sem restaurar codigo do aplicativo. Tags antigas ausentes

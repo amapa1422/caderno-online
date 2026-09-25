@@ -46,7 +46,7 @@ em telas grandes. Imagens copiadas do anexo, sem regeneracao ou novas dependenci
 ## Checkpoints e validacao
 
 Inicial: CP-0015, ad3490ec58ee93570c63c1d21299ab87f2c767d5, tag anotada local.
-Final: refs/tags/CP-0016, validado localmente. Hash literal em commit complementar da mesma tarefa. Edge: 129 checks de skins, 80 combinacoes, reload/storage/reduced-motion/teclado e zero diferencas de pixels em quatro comparacoes Normal. Chrome: 112 checks funcionais, mouse/toque, nove larguras nos dois modos, viewport curto. Console limpo; Firebase simulado. Detalhes em CHANGE-0009.
+Final: 387733c580bc536e9ce0ebed6786b1a9db3caa6c (refs/tags/CP-0016), validado localmente. Hash literal registrado em commit complementar da mesma tarefa; HEAD pode conter somente esses metadados posteriores. Edge: 129 checks de skins, 80 combinacoes, reload/storage/reduced-motion/teclado e zero diferencas de pixels em quatro comparacoes Normal. Chrome: 112 checks funcionais, mouse/toque, nove larguras nos dois modos, viewport curto. Console limpo; Firebase simulado. Detalhes em CHANGE-0009.
 Ultimo checkpoint historico com validacao documentada: CP-0014,
 bd0217ebd101f47b713176396c80284ad12d0aab. Commit existe, mas a tag nao esta neste
 checkout nem no remoto consultado; nao foi recriada. Testes historicos nao sao
